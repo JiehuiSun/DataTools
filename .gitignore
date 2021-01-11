@@ -86,7 +86,7 @@ bak/
 portal/
 
 # conf file
-bin/uwsgi.sh
+# bin/uwsgi.sh
 #egret/wsgi.py
 #uwsgi.ini
 #uwsgi4system.ini
