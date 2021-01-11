@@ -21,7 +21,7 @@ sdist/
 var/
 mandela/settings_local.py
 mandela/settings_portal_local.py
-logs/
+# logs/
 gen_git_manifest.sh
 gen_patch.sh
 upload/
@@ -57,7 +57,7 @@ coverage.xml
 *.pot
 
 # Django stuff:
-*.log
+# *.log
 */migrations/0*
 *.wpr
 *.wpu
@@ -75,6 +75,7 @@ migrate.bat
 
 # venv
 .venv/
+venv/
 
 # static
 static/
@@ -82,12 +83,7 @@ static/
 # bak
 bak/
 
-# portal
-portal/
-
 # conf file
-# bin/uwsgi.sh
-#egret/wsgi.py
-#uwsgi.ini
-#uwsgi4system.ini
+bin/uwsgi.sh
+uwsgi.ini
 *.pid
