@@ -1,6 +1,8 @@
 import os
 import logging
 from flask import Flask
+from flask_admin import Admin
+from flask_babelex import Babel
 from werkzeug.routing import BaseConverter
 
 from base import configs
@@ -11,6 +13,7 @@ from base import mail
 from base import apscheduler
 from base import tasks
 from account.helpers import algorithm_auth_login
+from admin import model_admin
 
 
 APP_NAME = 'base'
@@ -24,6 +27,9 @@ class RegexConverter(BaseConverter):
 
 def create_app():
     app = Flask(APP_NAME)
+    admin = Admin(app, name="后台管理系统")
+    model_admin(admin, db)
+    babel = Babel(app)
     app.config.from_object(configs.DefaultConfig)
     app.url_map.converters['re'] = RegexConverter
     config_blueprint(app)
