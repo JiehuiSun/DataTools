@@ -58,7 +58,7 @@ coverage.xml
 
 # Django stuff:
 *.log
-*/migrations/0*
+migrations/versions/*
 *.wpr
 *.wpu
 dev.py

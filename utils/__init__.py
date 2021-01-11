@@ -1,5 +1,6 @@
 
 import json
+import random
 import mimetypes
 import requests
 import pymysql
@@ -168,3 +169,18 @@ def tasks(**params):
             return res
         return wrapper
     return outter
+
+
+def valdate_code(num=8, only_num=False):
+    """
+    随机码
+    """
+    ret = str()
+    for _ in range(num):
+        random_num = random.randint(0, 9)
+        if not only_num:
+            alfa = chr(random.randint(97, 122))
+            alfa2 = chr(random.randint(65, 90))
+            random_num = random.choice([str(random_num), alfa, alfa2])
+        ret = ret + random_num
+    return ret
