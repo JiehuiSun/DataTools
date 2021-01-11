@@ -32,3 +32,12 @@ ___
 * 扩展为多用户/组的组织体系
 
 ___
+
+#### 数据库管理
+##### 该项目使用alembic进行数据库的管理
+
+* pip install alembic 进行安装
+* 在项目目录下执行 alembic init migrations，此时项目目录会生成alembic.ini文件，在里面配置自己的mysql：sqlalchemy.url, 默认使用的sqlite，如果有了alembic.ini/migrations需手动删除一下。
+* 修改migrations/env.py文件内容：target_metadata
+* 此时执行：alembic revision --autogenerate -m "init"，这样就会在migrations/versions中生成数据库迁移文件
+* 执行：alembic upgrade head，就会在你的数据库中生成表 注意：使用mysql时请先在你的mysql中创建相应的数据库
