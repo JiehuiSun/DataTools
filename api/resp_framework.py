@@ -70,11 +70,12 @@ class Resp(_EvenException):
 
 
     @classmethod
-    def ret(cls, errcode=0, errmsg="", data={}):
+    def ret(cls, errcode=0, errmsg="", data={}, template=""):
         ret = {
             "errcode": errcode,
             "errmsg": "OK",
-            "data": data
+            "data": data,
+            "template": template
         }
 
         if ret["errcode"] == 0:
