@@ -31,7 +31,11 @@ for module in DefaultConfig.MODULES:
 methods = ['GET', 'POST', 'PUT', 'DELETE']
 for path, view in routing_dict.items():
     # instance.add_url_rule("{0}<re('.*'):key>".format(path),
+    if "<" not in path:
+        endpoint = path
+    else:
+        endpoint = path.split("<")[0]
     instance.add_url_rule("{0}".format(path),
-                          view_func=view.as_view(path),
+                          view_func=view.as_view(endpoint),
                           methods=methods,
-                          endpoint=path)
+                          endpoint=endpoint)

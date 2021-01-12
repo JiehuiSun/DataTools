@@ -5,6 +5,8 @@
 # Filename: views.py
 
 
+import pymysql
+
 from api import Api
 from dms.models import DatabaseModel
 
@@ -36,3 +38,48 @@ class DatabasesView(Api):
             "data_list": data_list,
         }
         return self.ret(template="databases.html", data=ret)
+
+
+class SQLWindowView(Api):
+    """
+    sql窗口
+    """
+    NEED_LOGIN = False
+    def get(self):
+        return self.ret(template="sql_window.html", data=self.data)
+
+    def post(self):
+        self.params_dict = {
+            "sql_cmd": "required str",
+            "db_id": "required str"
+        }
+        self.ver_params()
+
+        query_obj = DatabaseModel.query.filter_by(id=self.data["db_id"],
+                                                  is_deleted=False).first()
+
+        if not query_obj:
+            return self.ret(template="db_err.html")
+
+        client = pymysql.connect(
+            user=query_obj.username,
+            password=query_obj.password,
+            host=query_obj.host,
+            port=query_obj.port,
+            database=query_obj.name
+        )
+        try:
+            cursor = client.cursor()
+            cursor.execute(self.data["sql_cmd"])
+            cursor.close()
+        except Exception as e:
+            return self.ret(template="db_err.html", data={"errmsg": str(e)})
+        client.close()
+
+        field_list = [i[0] for i in cursor.description]
+
+        ret = {
+            "field_list": field_list,
+            "data_list": cursor.fetchall()
+        }
+        return self.ret(template="sql_ret.html", data=ret)
