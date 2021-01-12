@@ -6,9 +6,33 @@
 
 
 from api import Api
+from dms.models import DatabaseModel
 
 
 class DatabasesView(Api):
+    """
+    数据库
+    """
     NEED_LOGIN = False
     def get(self):
-        return self.ret(template="databases.html")
+        """
+        列表
+        """
+        db_list = DatabaseModel.query.filter_by(is_deleted=False) \
+            .values("id", "name", "comments", "dt_create")
+
+        data_list = list()
+        for i in db_list:
+            data_dict = {
+                "id": i[0],
+                "name": i[1],
+                "comments": i[2],
+                "dt_create": i[3],
+            }
+
+            data_list.append(data_dict)
+
+        ret = {
+            "data_list": data_list,
+        }
+        return self.ret(template="databases.html", data=ret)

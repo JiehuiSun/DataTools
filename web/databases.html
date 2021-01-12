@@ -1,1 +1,92 @@
-数据库列表
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/png" sizes="144x144" href="https://static.mumway.com/saas/payShare/logo_hymm.png"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@3.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    #feedback td {
+      border: 1px solid #d9d9d9;
+      padding: 4px 8px;
+      width: 50px;
+    }
+
+    #feedback .content {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    #feedback {
+      border-collapse: collapse;
+      width: 1060px;
+      border-collapse:collapse;
+      table-layout:fixed;
+      word-break:break-all;
+      margin-top: 50px;
+    }
+
+    .content-td {
+      font-size: 12px;
+    }
+
+    #caption {
+      font-size: 28px;
+      margin: 10px;
+    }
+
+    td span {
+      margin-left: 7px;
+    }
+
+    td a {
+      text-decoration: none;
+    }
+  </style>
+  <title>数据库列表</title>
+</head>
+
+<body>
+  <table id="feedback" align="center">
+  <caption id="caption">数据库列表</caption>
+  <colgroup id="colgroup">
+  </colgroup>
+
+  <tr style="height: 33px;">
+    <td>ID</td>
+    <td>库名</td>
+    <td>备注</td>
+    <td>创建时间</td>
+    <td>操作</td>
+  </tr>
+
+  {% for i in data_list %}
+  <tr style="height: 33px;" class="content-td">
+    <td>{{ i.id }}</td>
+    <td>{{ i.name }}</td>
+    <td>{{ i.comments }}</td>
+    <td>{{ i.dt_create }}</td>
+    <td><a href="">连接</a></td>
+  </tr>
+  {% endfor %}
+  </table>
+
+  <div id="paging" align="center">
+    <ul class="pagination">
+      <!--{{ page_html }}-->
+    </ul>
+  </div>
+
+  <script type="text/javascript">
+    var colgroup = document.getElementById("colgroup")
+    for (var i = 0; i < 5; i++) {
+      var col = document.createElement("col")
+      col.width = "100px"
+      colgroup.appendChild(col)
+    }
+
+  </script>
+</body>
+
+</html>
