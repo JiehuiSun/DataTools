@@ -6,6 +6,7 @@
 from flask import request
 from flask import jsonify
 from flask import current_app
+from flask import render_template
 from flask.views import View
 
 from base import errors
@@ -81,6 +82,7 @@ class Api(VerParams, Resp, View):
             result = {
                 "errcode": e.errno,
                 "errmsg": e.errmsg,
+                "template": "404.html",
                 "data": {}
             }
         except Exception as e:
@@ -89,9 +91,15 @@ class Api(VerParams, Resp, View):
             result = {
                 "errcode": errors.BaseError.errno,
                 "errmsg": errors.BaseError.errmsg,
+                "template": "404.html",
                 "data": {}
             }
-        return jsonify(result)
+        if current_app.config["RESP_TYPE"] == "json":
+            return jsonify(result)
+        elif current_app.config["RESP_TYPE"] == "templates":
+            return render_template(result["template"], **result["data"])
+        else:
+            return result
 
     def __get_subpath(self, path):
         tail_slash = ''
@@ -154,8 +162,8 @@ class Api(VerParams, Resp, View):
         if lpc:
             try:
                 self.call_method = request.method.lower()
-                if self.call_method == 'get' and not self.key:
-                    self.call_method = 'list'
+                # if self.call_method == 'get' and not self.key:
+                    # self.call_method = 'list'
             except Exception as e:
                 # logger.error(f'请求失败：\ncall_method {request.method.lower()}\n url {request.path} \n headers {headers} ;\n data {data} \n {e} ')
                 raise errors.MethodError("请求无效")

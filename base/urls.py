@@ -6,7 +6,7 @@ import importlib
 from flask import Blueprint
 from base.configs import DefaultConfig
 
-instance = Blueprint('base', __name__)
+instance = Blueprint('base', __name__, template_folder='web')
 
 urls = ()
 
@@ -30,6 +30,8 @@ for module in DefaultConfig.MODULES:
 
 methods = ['GET', 'POST', 'PUT', 'DELETE']
 for path, view in routing_dict.items():
-    instance.add_url_rule("{0}<re('.*'):key>".format(path),
+    # instance.add_url_rule("{0}<re('.*'):key>".format(path),
+    instance.add_url_rule("{0}".format(path),
                           view_func=view.as_view(path),
-                          methods=methods)
+                          methods=methods,
+                          endpoint=path)

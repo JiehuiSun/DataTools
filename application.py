@@ -1,6 +1,6 @@
 import os
 import logging
-from flask import Flask
+from flask import Flask, render_template
 from flask_admin import Admin
 from flask_babelex import Babel
 from werkzeug.routing import BaseConverter
@@ -45,7 +45,7 @@ def create_app():
 
 def config_blueprint(app):
     from base.urls import instance
-    app.register_blueprint(instance, url_prefix='/api')
+    app.register_blueprint(instance, url_prefix='/api' if configs.DefaultConfig.RESP_TYPE == "json" else "")
 
 
 def config_logger(app):
@@ -108,3 +108,7 @@ def config_apscheduler(app):
 
 app = create_app()
 tasks.InitTasks()
+
+@app.route("/", endpoint="index")
+def index():
+    return render_template("index.html")
