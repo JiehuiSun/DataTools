@@ -94,10 +94,17 @@ class Api(VerParams, Resp, View):
                 "template": "404.html",
                 "data": {}
             }
-        if current_app.config["RESP_TYPE"] == "json":
+        if not isinstance(result, dict):
+            return result
+        elif current_app.config["RESP_TYPE"] == "json":
             return jsonify(result)
         elif current_app.config["RESP_TYPE"] == "templates":
-            return render_template(result["template"], **result["data"])
+            if result.get("template"):
+                return render_template(result["template"], **result["data"])
+            elif isinstance(result, dict):
+                return jsonify(result)
+            else:
+                return result
         else:
             return result
 
