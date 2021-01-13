@@ -5,6 +5,7 @@ import sys
 import importlib
 from flask import Blueprint
 from base.configs import DefaultConfig
+from dms.views import ExportSQLView
 
 instance = Blueprint('base', __name__, template_folder='web')
 
@@ -39,3 +40,6 @@ for path, view in routing_dict.items():
                           view_func=view.as_view(endpoint),
                           methods=methods,
                           endpoint=endpoint)
+
+# 下载接口(使用第三方文件存储时可不用)
+instance.add_url_rule("/dms/v1/sql_window/<re('.*'):key>", view_func=ExportSQLView.as_view("down_file"), methods=["GET"], endpoint="down_file")

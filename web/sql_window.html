@@ -34,6 +34,7 @@
 
     <div class="div_conter">
       <button type="button"; onclick="executeSql()">执行</button>
+      <button type="button"; onclick="exportSql()">导出</button>
     </div>
 
     <div id=sql_ret class="div_conter">
@@ -54,6 +55,22 @@
       data: JSON.stringify({sql_cmd: txt, db_id: db_id}),
       success:function(result){
       $("#sql_ret").html(result);
+      }});
+  }
+
+
+  function exportSql() {
+    txt = $("#sql_cmd").val();
+    db_id = "{{ db_id }}"
+    $.ajax({
+      url:"{{ url_for('base./dms/v1/export_sql/') }}",
+      type: "post",
+      contentType: "application/json",
+      data: JSON.stringify({sql_cmd: txt, db_id: db_id}),
+      success:function(result){
+        // window.open("https://test-egret.oss-cn-zhangjiakou.aliyuncs.com/Test/dg.xlsx")
+        // window.open("dg.xlsx")
+        $("#sql_ret").html(result);
       }});
   }
 </script>
