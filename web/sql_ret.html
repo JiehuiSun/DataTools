@@ -10,6 +10,7 @@
       border: 1px solid #d9d9d9;
       padding: 4px 8px;
       width: 50px;
+      height: 100%;
     }
 
     #table .content {
@@ -20,7 +21,8 @@
 
     #table {
       border-collapse: collapse;
-      width: 1060px;
+      // width: 1060px;
+      min-width: 210px;
       border-collapse:collapse;
       table-layout:fixed;
       word-break:break-all;
@@ -44,30 +46,26 @@
       text-decoration: none;
     }
   </style>
-  <title>数据库列表</title>
+  <title>数据库结果集</title>
 </head>
 
 <body>
   <table id="table" align="center">
-  <caption id="caption">数据库列表</caption>
+  <caption id="caption" class="div_conter">数据库结果集</caption>
   <colgroup id="colgroup">
   </colgroup>
 
   <tr style="height: 33px;">
-    <td>ID</td>
-    <td>库名</td>
-    <td>备注</td>
-    <td>创建时间</td>
-    <td>操作</td>
+  {% for i in field_list %}
+  <td style="height: 27px; white-space: nowrap;">{{ i }}</td>
+  {% endfor %}
   </tr>
 
   {% for i in data_list %}
   <tr style="height: 33px;" class="content-td">
-    <td>{{ i.id }}</td>
-    <td>{{ i.name }}</td>
-    <td>{{ i.comments }}</td>
-    <td>{{ i.dt_create }}</td>
-    <td><a href="{{ url_for('base./dms/v1/sql_window/') }}?db_id={{ i.id }}">连接</a></td>
+    {% for j in i %}
+      <td>{{ j }}</td>
+    {% endfor %}
   </tr>
   {% endfor %}
   </table>
@@ -80,9 +78,10 @@
 
   <script type="text/javascript">
     var colgroup = document.getElementById("colgroup")
-    for (var i = 0; i < 5; i++) {
+    for (var i = 0; i < {{ field_list.lenth }}; i++) {
       var col = document.createElement("col")
-      col.width = "100px"
+      // col.width = "100px"
+      col.height = "100px"
       colgroup.appendChild(col)
     }
 

@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>SQL窗口</title>
+    <script src="https://apps.bdimg.com/libs/jquery/2.1.4/jquery.min.js"></script>
+  <style>
+    body {
+      text-align: center;
+    }
+
+    #sql_cmd {
+      border: 1px solid #d9d9d9;
+      padding: 4px 8px;
+      width: 50px;
+      height: 200px;
+      width: 500px;
+    }
+
+    .div_conter {
+      text-align: center;
+      vertical-align: middle;
+      padding: 10px;
+    }
+    </style>
+</head>
+<body>
+    <h1>SQL窗口</h1>
+    <div class="div_conter">
+      <input type=text; id=sql_cmd>
+    </div>
+
+    <div class="div_conter">
+      <button type="button"; onclick="executeSql()">执行</button>
+    </div>
+
+    <div id=sql_ret class="div_conter">
+    </div>
+</body>
+
+<script>
+  function executeSql() {
+    txt = $("#sql_cmd").val();
+    db_id = "{{ db_id }}"
+//    $.post("{{ url_for('base./dms/v1/sql_window/') }}",{suggest:txt},function(result){
+//      $("#sql_ret").html(result);
+//  });
+    $.ajax({
+      url:"{{ url_for('base./dms/v1/sql_window/') }}",
+      type: "post",
+      contentType: "application/json",
+      data: JSON.stringify({sql_cmd: txt, db_id: db_id}),
+      success:function(result){
+      $("#sql_ret").html(result);
+      }});
+  }
+</script>
+
+</html>
