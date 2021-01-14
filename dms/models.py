@@ -5,11 +5,18 @@
 # Filename: models.py
 
 
+import time
+
 from base import db
 from utils import time_utils, valdate_code
 
 
 class DatabaseModel(db.Model):
+    """
+    数据库
+    """
+    __tablename__ = "database_model"
+
     id = db.Column(db.Integer, primary_key=True)
     host = db.Column(db.String(128), nullable=False, comment="主机名")
     username = db.Column(db.String(128), nullable=False, comment="用户名")
@@ -22,3 +29,76 @@ class DatabaseModel(db.Model):
     dt_create = db.Column(db.DateTime, default=time_utils.now_dt)
     dt_update = db.Column(db.DateTime, default=time_utils.now_dt)
 
+    # def __init__(self, name):
+        # self.name = name
+
+    def __repr__(self):
+        return self.name
+
+    def __str__(self):
+        return self.name
+
+
+class RequirementModel(db.Model):
+    """
+    需求
+    """
+    __tablename__ = "requirement_model"
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(128), nullable=False, comment="项目名")
+    comments = db.Column(db.String(128), nullable=True, comment="备注")
+    user_mail_list = db.Column(db.Text, nullable=False, comment="用户邮箱")
+    # sqls = db.relationship('SQLModel', backref='project', lazy='dynamic')
+    # tasks = db.relationship('TasksModel', backref='project', lazy='dynamic')
+    is_deleted = db.Column(db.Boolean, default=False)
+    dt_create = db.Column(db.DateTime, default=time_utils.now_dt)
+    dt_update = db.Column(db.DateTime, default=time_utils.now_dt)
+
+    def __repr__(self):
+        return self.name
+
+    def __str__(self):
+        return self.name
+
+
+class SQLModel(db.Model):
+    """
+    sql
+    """
+    __tablename__ = "sql_model"
+
+    id = db.Column(db.Integer, primary_key=True)
+    project_id = db.Column(db.ForeignKey("requirement_model.id"))
+    project = db.relationship('RequirementModel', backref=db.backref('sql_model', lazy='dynamic'))
+    database_id = db.Column(db.ForeignKey("database_model.id"))
+    database = db.relationship('DatabaseModel', backref=db.backref('sql_model', lazy='dynamic'))
+    content = db.Column(db.Text, nullable=False, comment="sql语句")
+    special_field = db.Column(db.String(64), nullable=False, comment="特殊字段")
+    is_deleted = db.Column(db.Boolean, default=False)
+    dt_create = db.Column(db.DateTime, default=time_utils.now_dt)
+    dt_update = db.Column(db.DateTime, default=time_utils.now_dt)
+
+
+class TasksModel(db.Model):
+    """
+    任务
+    """
+    __tablename__ = "tasks_model"
+
+    id = db.Column(db.Integer, primary_key=True)
+    task_no = db.Column(db.String(128), nullable=False, default=str(time.time), comment="备注")
+    project_id = db.Column(db.ForeignKey("requirement_model.id"))
+    project = db.relationship('RequirementModel', backref=db.backref('tasks_model', lazy='dynamic'))
+    comments = db.Column(db.String(128), nullable=True, comment="备注")
+    year = db.Column(db.Integer, nullable=True, comment="年")
+    month = db.Column(db.Integer, nullable=True, comment="月")
+    day = db.Column(db.Integer, nullable=True, comment="日")
+    week = db.Column(db.Integer, nullable=True, comment="周")
+    day_of_week = db.Column(db.Integer, nullable=True, comment="周期")
+    hour = db.Column(db.Integer, nullable=True, comment="时")
+    minute = db.Column(db.Integer, nullable=True, comment="分")
+    second = db.Column(db.Integer, nullable=True, comment="秒")
+    is_deleted = db.Column(db.Boolean, default=False)
+    dt_create = db.Column(db.DateTime, default=time_utils.now_dt)
+    dt_update = db.Column(db.DateTime, default=time_utils.now_dt)
