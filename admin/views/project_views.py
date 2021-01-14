@@ -14,6 +14,7 @@ class ProjectView(ModelView):
         "name": "项目名",
         "comments": "备注",
         "user_mail_list": "用户邮箱",
+        "task_type": "项目关系类型",
         "dt_create": "创建时间",
         "dt_update": "更新时间",
     }
@@ -42,6 +43,7 @@ class SQLView(ModelView):
 class TaskView(ModelView):
 
     column_labels = {
+        "task_no": "任务号",
         "project": "项目",
         "database": "数据库",
         "comments": "备注",
