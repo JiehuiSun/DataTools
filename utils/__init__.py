@@ -4,6 +4,7 @@ import random
 import mimetypes
 import requests
 import pymysql
+from openpyxl import Workbook
 from flask import current_app
 from flask_mail import Message
 
@@ -184,3 +185,29 @@ def valdate_code(num=8, only_num=False):
             random_num = random.choice([str(random_num), alfa, alfa2])
         ret = ret + random_num
     return ret
+
+
+def save_xlsx_file(data, file_name, sheet_name="Sheet"):
+    """
+    """
+    wb = Workbook()
+    ws_list = wb.worksheets
+    if ws_list:
+        ws = ws_list[0]
+    else:
+        ws = wb.create_sheet(sheet_name)
+    ws.append(data["field_list"])
+
+    for i in data["data_list"]:
+        ws.append(i)
+    wb.save(file_name)
+    return file_name
+
+
+def save_file(file_type, data, file_name):
+    """
+    保存文件
+    """
+    if file_type == 1:
+        save_xlsx_file(data, file_name)
+    return file_name
