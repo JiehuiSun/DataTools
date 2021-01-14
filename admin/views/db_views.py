@@ -5,10 +5,10 @@
 # Filename: db_views.py
 
 
-from flask_admin.contrib.sqla import ModelView
+from . import AdminBaseView
 
 
-class DBView(ModelView):
+class DBView(AdminBaseView):
     # can_delete = False
     # can_edit = False
     # can_create = False
