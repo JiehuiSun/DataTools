@@ -36,6 +36,7 @@ class TaskView(AdminBaseView):
 
     column_labels = {
         "task_no": "任务号",
+        "name": "任务名称",
         "project": "项目",
         "database": "数据库",
         "comments": "备注",
