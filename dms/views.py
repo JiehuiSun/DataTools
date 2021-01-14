@@ -13,7 +13,7 @@ from flask import make_response, send_file
 
 from api import Api
 from dms.models import DatabaseModel
-from utils import valdate_code
+from utils import valdate_code, save_file
 
 
 class DatabasesView(Api):
@@ -125,19 +125,14 @@ class ExportSQLView(Api):
 
         field_list = [i[0] for i in cursor.description]
 
-        wb = Workbook()
-        ws_list = wb.worksheets
-        if ws_list:
-            ws = ws_list[0]
-        else:
-            ws = wb.create_sheet('Sheet')
-        ws.append(field_list)
+        data = {
+            "field_list": field_list,
+            "data_list": cursor.fetchall()
+        }
 
-        for i in cursor.fetchall():
-            ws.append(i)
+        file_name = "tmp-{0}-{1}.xlsx".format(str(int(time.time())), valdate_code())
+        file_name = save_file(1, data, file_name)
 
-        file_name = "{0}-{1}.xlsx".format(str(int(time.time())), valdate_code())
-        wb.save(file_name)
         # content = save_virtual_workbook(wb)
         # resp = make_response(content)
         # resp.headers["Content-Disposition"] = 'attachment; filename=aaa.xlsx'
