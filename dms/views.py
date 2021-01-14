@@ -12,7 +12,7 @@ from openpyxl.writer.excel import save_virtual_workbook
 from flask import make_response, send_file
 
 from api import Api
-from dms.models import DatabaseModel
+from dms.models import DatabaseModel, TasksModel
 from utils import valdate_code, save_file
 
 
@@ -146,3 +146,32 @@ class ExportSQLView(Api):
         resp.headers["Content-Disposition"] = 'attachment; filename=export_sql.xlsx'
         resp.headers['Content-Type'] = 'application/x-xlsx'
         return resp
+
+
+class TasksView(Api):
+    """
+    任务
+    """
+    NEED_LOGIN = False
+    def get(self):
+        """
+        列表
+        """
+        task_list = TasksModel.query.filter_by(is_deleted=False) \
+            .values("id", "task_no", "comments", "dt_create")
+
+        data_list = list()
+        for i in task_list:
+            data_dict = {
+                "id": i[0],
+                "task_no": i[1],
+                "comments": i[2],
+                "dt_create": i[3],
+            }
+
+            data_list.append(data_dict)
+
+        ret = {
+            "data_list": data_list,
+        }
+        return self.ret(template="tasks.html", data=ret)
