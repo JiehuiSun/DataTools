@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/png" sizes="144x144" href="https://static.mumway.com/saas/payShare/logo_hymm.png"/>
+  <style>
+    #task td {
+      border: 1px solid #d9d9d9;
+      padding: 4px 8px;
+      width: 30px;
+    }
+
+    #task {
+      border-collapse: collapse;
+      width: 800px;
+      border-collapse:collapse;
+      table-layout:fixed;
+      word-break:break-all;
+      margin-top: 50px;
+    }
+
+    #caption {
+      font-size: 28px;
+      margin: 10px;
+    }
+
+    td a {
+      text-decoration: none;
+    }
+  </style>
+  <title>任务详情</title>
+</head>
+
+<body>
+  <table id="task" align="center">
+  <caption id="caption">任务详情</caption>
+  <colgroup id="colgroup">
+    <col width="6px">
+    <col>
+  </colgroup>
+
+  <tr>
+    <td class="td-title">任务ID</td>
+    <td>{{ task.id }}</td>
+  </tr>
+
+  <tr>
+    <td>任务号</td>
+    <td>{{ task.task_no }}</td>
+  </tr>
+
+  <tr>
+    <td>任务名称</td>
+    <td>{{ task.name }}</td>
+  </tr>
+
+  <tr>
+    <td>项目ID</td>
+    <td>{{ task.project_id }}</td>
+  </tr>
+
+  <tr>
+    <td>项目名称</td>
+    <td>{{ task.project_name }}</td>
+  </tr>
+
+  <tr>
+    <td>备注</td>
+    <td>{{ task.comments }}</td>
+  </tr>
+
+  <tr>
+    <td>年</td>
+    <td>{{ task.year }}</td>
+  </tr>
+
+  <tr>
+    <td>月</td>
+    <td>{{ task.month }}</td>
+  </tr>
+
+  <tr>
+    <td>日</td>
+    <td>{{ task.day }}</td>
+  </tr>
+
+  <tr>
+    <td>周</td>
+    <td>{{ task.week }}</td>
+  </tr>
+
+  <tr>
+    <td>周期</td>
+    <td>{{ task.day_of_week }}</td>
+  </tr>
+
+  <tr>
+    <td>时</td>
+    <td>{{ task.hour }}</td>
+  </tr>
+
+  <tr>
+    <td>分</td>
+    <td>{{ task.minute }}</td>
+  </tr>
+
+  <tr>
+    <td>秒</td>
+    <td>{{ task.second }}</td>
+  </tr>
+
+  </table>
+
+  <script type="text/javascript">
+  </script>
+</body>
+
+</html>

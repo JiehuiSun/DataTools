@@ -157,6 +157,9 @@ class TasksView(Api):
         """
         列表
         """
+        if self.data.get("id"):
+            return self.query_task()
+
         task_list = TasksModel.query.filter_by(is_deleted=False) \
             .values("id", "task_no", "comments", "dt_create")
 
@@ -175,3 +178,28 @@ class TasksView(Api):
             "data_list": data_list,
         }
         return self.ret(template="tasks.html", data=ret)
+
+    def query_task(self):
+        """
+        详情
+        """
+        task_obj = TasksModel.query.filter_by(id=self.data["id"]).first()
+        if not task_obj:
+            return self.ret(template="db_err.html", data={"errmsg": "任务不存在或已被删除"})
+        ret = {
+            "id": task_obj.id,
+            "task_no": task_obj.task_no,
+            "name": task_obj.name,
+            "project_id": task_obj.project_id,
+            "project_name": task_obj.project,
+            "comments": task_obj.comments,
+            "year": task_obj.year,
+            "month": task_obj.month,
+            "day": task_obj.day,
+            "week": task_obj.week,
+            "day_of_week": task_obj.day_of_week,
+            "hour": task_obj.hour,
+            "minute": task_obj.minute,
+            "second": task_obj.second
+        }
+        return self.ret(template="task.html", data={"task": ret})
