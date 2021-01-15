@@ -20,3 +20,7 @@ class AdminBaseView(ModelView):
     column_exclude_list = (
         "is_deleted", "dt_update"
     )
+
+    form_excluded_columns = (
+        "is_deleted", "dt_update", "dt_create", "id"
+    )

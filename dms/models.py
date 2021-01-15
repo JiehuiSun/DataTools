@@ -8,7 +8,7 @@
 import time
 
 from base import db
-from utils import time_utils, valdate_code
+from utils import time_utils, valdate_code, gen_task_no
 
 
 class DatabaseModel(db.Model):
@@ -114,7 +114,8 @@ class TasksModel(db.Model):
     __tablename__ = "tasks_model"
 
     id = db.Column(db.Integer, primary_key=True)
-    task_no = db.Column(db.String(128), nullable=False, default=time.time, comment="备注")
+    task_no = db.Column(db.String(128), nullable=False, default=gen_task_no, comment="备注")
+    task_type = db.Column(db.Enum('cron', 'interval'), server_default='cron', nullable=False)
     name = db.Column(db.String(128), nullable=True, comment="任务名")
     project_id = db.Column(db.ForeignKey("requirement_model.id"))
     project = db.relationship('RequirementModel', backref=db.backref('tasks_model', lazy='dynamic'))
