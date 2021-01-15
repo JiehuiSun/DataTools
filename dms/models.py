@@ -114,10 +114,11 @@ class TasksModel(db.Model):
     __tablename__ = "tasks_model"
 
     id = db.Column(db.Integer, primary_key=True)
-    task_no = db.Column(db.String(128), nullable=False, default=str(time.time), comment="备注")
+    task_no = db.Column(db.String(128), nullable=False, default=time.time, comment="备注")
+    name = db.Column(db.String(128), nullable=True, comment="任务名")
     project_id = db.Column(db.ForeignKey("requirement_model.id"))
     project = db.relationship('RequirementModel', backref=db.backref('tasks_model', lazy='dynamic'))
-    comments = db.Column(db.String(128), nullable=True, comment="备注")
+    comments = db.Column(db.String(256), nullable=True, comment="备注")
     year = db.Column(db.Integer, nullable=True, comment="年")
     month = db.Column(db.Integer, nullable=True, comment="月")
     day = db.Column(db.Integer, nullable=True, comment="日")

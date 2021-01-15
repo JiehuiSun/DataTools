@@ -5,10 +5,10 @@
 # Filename: project_views.py
 
 
-from flask_admin.contrib.sqla import ModelView
+from . import AdminBaseView
 
 
-class ProjectView(ModelView):
+class ProjectView(AdminBaseView):
 
     column_labels = {
         "name": "项目名",
@@ -19,12 +19,8 @@ class ProjectView(ModelView):
         "dt_update": "更新时间",
     }
 
-    column_exclude_list = (
-        "is_deleted", "dt_update"
-    )
 
-
-class SQLView(ModelView):
+class SQLView(AdminBaseView):
 
     column_labels = {
         "project": "项目",
@@ -35,22 +31,15 @@ class SQLView(ModelView):
         "dt_update": "更新时间",
     }
 
-    column_exclude_list = (
-        "is_deleted", "dt_update"
-    )
 
-
-class TaskView(ModelView):
+class TaskView(AdminBaseView):
 
     column_labels = {
         "task_no": "任务号",
+        "name": "任务名称",
         "project": "项目",
         "database": "数据库",
         "comments": "备注",
         "dt_create": "创建时间",
         "dt_update": "更新时间",
     }
-
-    column_exclude_list = (
-        "is_deleted", "dt_update"
-    )

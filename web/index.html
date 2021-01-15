@@ -9,7 +9,12 @@
 <body>
     <h1>数据管理工具首页</h1>
     <div>
-      <a href="{{ url_for('base./dms/v1/databases/') }}">数据库</a>
+      <div>
+        <a href="{{ url_for('base./dms/v1/databases/') }}">数据库</a>
+      </div>
+      <div>
+        <a href="{{ url_for('base./dms/v1/tasks/') }}">任务</a>
+      </div>
     </div>
 </body>
 </html>
