@@ -70,10 +70,10 @@
     <td>{{ i.comments }}</td>
     <td>{{ i.dt_create }}</td>
     <td>
-      <a href="?id=1">详情</a> |
+      <a href="?id={{ i.id }}">详情</a> |
       <a href="">查询</a> |
       <a href="">导出</a> |
-      <a href="">开启任务</a>
+      <a href="{{ url_for('base./dms/v1/start_task/') }}?id={{ i.task_no }}&status=1">开启任务</a>
     </td>
   </tr>
   {% endfor %}

@@ -20,7 +20,7 @@ class Requests(object):
             return json.dumps({"errcode": 10000, "errmsg": "不支持的请求"})
         headers_dict = kwargs.get("headers", dict())
         if not headers_dict.get("X-MUMWAY-TRACEID"):
-            from datacenter import redis
+            from base import redis
             headers_dict["X-MUMWAY-TRACEID"] = redis.client.get("X-MUMWAY-TRACEID")
 
         kwargs["headers"] = headers_dict
@@ -165,7 +165,7 @@ def tasks(**params):
     def outter(func):
         def wrapper(*args,**kwargs):
             res = func
-            from datacenter import apscheduler
+            from base import apscheduler
             apscheduler.add_job(func=func, **params)
             return res
         return wrapper

@@ -6,11 +6,14 @@
 
 
 import time
+import json
 import pymysql
 from openpyxl import Workbook
 from flask import current_app
 
-from .models import TasksModel
+from base import apscheduler
+
+from dms.models import TasksModel
 
 from utils import valdate_code, save_file, send_mail
 
@@ -52,47 +55,80 @@ def handle_one_sql(sql_list):
 def execute_task(task_id, is_show=False, is_export=False):
     """
     执行任务
+    parasm: task_id: TasksModel.task_no
     """
-    task_obj = TasksModel.query.filter_by(id=task_id,
-                                          is_deleted=False).first()
-    if not task_obj:
-        errmsg = "TaskID: {0} 执行失败, ID错误或已被删除".format(task_id)
-        current_app.logger.error(errmsg)
-        if is_show:
-            return {"template": "db_err.html", "data": {"errmsg": str(errmsg)}}
-        return
-
-    project = task_obj.project
-
-    sql_list = project.sql_model.all()
-
-    task_type = project.task_type
-
-    data = dict()
-    # 根据不同任务类型处理
-    if task_type.type_id == 1:
-        tag, data = handle_one_sql(sql_list)
-        if not tag:
-            current_app.logger.error(data)
+    from application import app
+    with app.app_context():
+        print(f"TaskID: {task_id}正在执行..")
+        a = TasksModel.query.filter_by(id=1).first()
+        task_obj = TasksModel.query.filter_by(task_no=task_id,
+                                            is_deleted=False).first()
+        if not task_obj:
+            errmsg = "TaskID: {0} 执行失败, ID错误或已被删除".format(task_id)
+            current_app.logger.error(errmsg)
             if is_show:
-                return {"template": "db_err.html", "data": {"errmsg": str(data)}}
+                return {"template": "db_err.html", "data": {"errmsg": str(errmsg)}}
             return
 
-    if is_show:
-        return {"template": "sql_ret.html", "data": data}
-    elif is_export:
-        file_name = "{0}-{1}.xlsx".format(str(int(time.time())), valdate_code())
-        file_name = save_file(1, data, file_name)
+        project = task_obj.project
 
-        ret_html = "<a href='{0}'>点击下载</a>".format(file_name)
-        return ret_html
-    else:
-        # 发送邮件
-        file_name = "{0}-{1}-{2}.xlsx".format(project.name,str(int(time.time())), valdate_code())
-        file_name = save_file(1, data, file_name)
+        sql_list = project.sql_model.all()
 
-        send_mail(title=project.name,
-                  content=project.comments,
-                  user_mail_list=project.user_mail_list,
-                  attachments=[file_name])
-        return True
+        task_type = project.task_type
+
+        data = dict()
+        # 根据不同任务类型处理
+        if task_type.type_id == 1:
+            tag, data = handle_one_sql(sql_list)
+            if not tag:
+                current_app.logger.error(data)
+                if is_show:
+                    return {"template": "db_err.html", "data": {"errmsg": str(data)}}
+                return
+
+        print(f"TaskID: {task_id}执行完成..")
+
+        if is_show:
+            return {"template": "sql_ret.html", "data": data}
+        elif is_export:
+            file_name = "{0}-{1}.xlsx".format(str(int(time.time())), valdate_code())
+            file_name = save_file(1, data, file_name)
+
+            ret_html = "<a href='{0}'>点击下载</a>".format(file_name)
+            return ret_html
+        else:
+            # 发送邮件
+            file_name = "{0}-{1}-{2}.xlsx".format(project.name,str(int(time.time())), valdate_code())
+            file_name = save_file(1, data, file_name)
+
+            send_mail(title=project.name,
+                      content=project.comments,
+                      user_mail_list=project.user_mail_list.split(","),
+                      attachments=[file_name])
+            return True
+
+
+def del_task_job():
+    """
+    删除任务
+    """
+    pass
+
+
+def add_task(task_id, **kwargs):
+    """
+    添加任务
+    """
+    try:
+        apscheduler.add_job(task_id, func=execute_task, args=(task_id,), **kwargs)
+    except Exception as e:
+        current_app.logger.error(f"注册任务失败: {e}")
+        return
+    return True
+
+
+def del_task(task_id, **kwargs):
+    """
+    删除任务
+    """
+    pass
