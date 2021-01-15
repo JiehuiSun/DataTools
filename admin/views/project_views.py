@@ -46,5 +46,5 @@ class TaskView(AdminBaseView):
     }
 
     form_excluded_columns = (
-        "is_deleted", "dt_update", "dt_create", "id", "task_no", ""
+        "is_deleted", "dt_update", "dt_create", "id", "task_no", "status"
     )

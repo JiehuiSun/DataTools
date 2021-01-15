@@ -235,7 +235,6 @@ class StartTaskView(Api):
             "day_of_week": task_obj.day_of_week,
             "hour": task_obj.hour,
             "minute": task_obj.minute,
-            # "minute": "*",
             "second": task_obj.second,
         }
 

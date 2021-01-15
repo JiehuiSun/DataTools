@@ -14,6 +14,7 @@ from base import apscheduler
 from base import tasks
 from account.helpers import algorithm_auth_login
 from admin import model_admin
+from dms import init_tasks
 
 
 APP_NAME = 'base'
@@ -108,6 +109,7 @@ def config_apscheduler(app):
 
 app = create_app()
 tasks.InitTasks()
+init_tasks()
 
 @app.route("/", endpoint="index")
 def index():
