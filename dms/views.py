@@ -265,7 +265,7 @@ class StartTaskView(Api):
         # 注册到任务APS
         ret = add_task(self.task_no, trigger=self.task_obj.task_type, **task_params)
         if not ret:
-            return self.ret(template="db_err.html", data={"errmsg": "任务不存在或已被删除"})
+            return self.ret(template="db_err.html", data={"errmsg": "任务不存在或已被删除/关闭"})
         else:
             self.task_obj.status = True
             db.session.commit()
@@ -276,4 +276,10 @@ class StartTaskView(Api):
         """
         关闭
         """
-        pass
+        try:
+            apscheduler.delete_job(self.task_no)
+        except:
+            pass
+        self.task_obj.status = False
+        db.session.commit()
+        return self.ret(template="200.html", data={"errmsg": "任务关闭成功", "next_url": "base./dms/v1/tasks/"})
