@@ -1,4 +1,5 @@
 
+import time
 import json
 import random
 import mimetypes
@@ -211,3 +212,8 @@ def save_file(file_type, data, file_name):
     if file_type == 1:
         save_xlsx_file(data, file_name)
     return file_name
+
+
+def gen_task_no():
+    return f"task{valdate_code()}{str(int(time.time))}"
+

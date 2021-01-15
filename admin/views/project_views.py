@@ -36,6 +36,7 @@ class TaskView(AdminBaseView):
 
     column_labels = {
         "task_no": "任务号",
+        "task_type": "任务类型",
         "name": "任务名称",
         "project": "项目",
         "database": "数据库",
@@ -43,3 +44,7 @@ class TaskView(AdminBaseView):
         "dt_create": "创建时间",
         "dt_update": "更新时间",
     }
+
+    form_excluded_columns = (
+        "is_deleted", "dt_update", "dt_create", "id", "task_no", ""
+    )
