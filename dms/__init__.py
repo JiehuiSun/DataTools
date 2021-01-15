@@ -60,7 +60,6 @@ def execute_task(task_id, is_show=False, is_export=False):
     from application import app
     with app.app_context():
         print(f"TaskID: {task_id}正在执行..")
-        a = TasksModel.query.filter_by(id=1).first()
         task_obj = TasksModel.query.filter_by(task_no=task_id,
                                             is_deleted=False).first()
         if not task_obj:
@@ -132,3 +131,45 @@ def del_task(task_id, **kwargs):
     删除任务
     """
     pass
+
+
+def all_tasks():
+    from application import app
+    with app.app_context():
+        task_obj_list = TasksModel.query.filter_by(is_deleted=False,
+                                                   status=True).all()
+
+        ret = dict()
+        for task_obj in task_obj_list:
+            _task_dict = {
+                "year": task_obj.year,
+                "month": task_obj.month,
+                "day": task_obj.day,
+                "week": task_obj.week,
+                "day_of_week": task_obj.day_of_week,
+                "hour": task_obj.hour,
+                "minute": task_obj.minute,
+                "second": task_obj.second,
+            }
+
+            task_dict = {
+                "trigger": task_obj.task_type
+            }
+            for k, v in _task_dict.items():
+                if v is not None:
+                    task_dict[k] = v
+
+            ret[task_obj.task_no] = task_dict
+
+        return ret
+
+def init_tasks():
+    task_list = all_tasks()
+    for task_id, params in task_list.items():
+        ret = add_task(task_id, **params)
+        if not ret:
+            print(f"{task_id}注册失败")
+        else:
+            print(f"{task_id}注册成功")
+
+    return

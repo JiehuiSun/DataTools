@@ -11,6 +11,7 @@ from openpyxl import Workbook
 from openpyxl.writer.excel import save_virtual_workbook
 from flask import make_response, send_file
 
+from base import db, apscheduler
 from api import Api
 from dms import add_task
 from dms.models import DatabaseModel, TasksModel
@@ -164,6 +165,9 @@ class TasksView(Api):
         task_list = TasksModel.query.filter_by(is_deleted=False) \
             .values("id", "task_no", "comments", "dt_create")
 
+        jobs = apscheduler.get_jobs()
+        job_id_list = [i.id for i in jobs]
+
         data_list = list()
         for i in task_list:
             data_dict = {
@@ -172,6 +176,11 @@ class TasksView(Api):
                 "comments": i[2],
                 "dt_create": i[3],
             }
+
+            if data_dict["task_no"] in job_id_list:
+                data_dict["status"] = 1
+            else:
+                data_dict["status"] = 0
 
             data_list.append(data_dict)
 
@@ -225,6 +234,7 @@ class StartTaskView(Api):
             return self.ret(template="db_err.html", data={"errmsg": "任务不存在或已被删除"})
 
         self.task_no = task_obj.task_no
+        self.task_obj = task_obj
 
         # TODO 任务设计类型(cron, interval, date) 目前只测试cron
         self.params = {
@@ -235,7 +245,6 @@ class StartTaskView(Api):
             "day_of_week": task_obj.day_of_week,
             "hour": task_obj.hour,
             "minute": task_obj.minute,
-            # "minute": "*",
             "second": task_obj.second,
         }
 
@@ -254,10 +263,12 @@ class StartTaskView(Api):
                 task_params[k] = v
 
         # 注册到任务APS
-        ret = add_task(self.task_no, trigger="cron", **task_params)
+        ret = add_task(self.task_no, trigger=self.task_obj.task_type, **task_params)
         if not ret:
-            return self.ret(template="db_err.html", data={"errmsg": "任务不存在或已被删除"})
+            return self.ret(template="db_err.html", data={"errmsg": "任务不存在或已被删除/关闭"})
         else:
+            self.task_obj.status = True
+            db.session.commit()
             return self.ret(template="200.html", data={"errmsg": "任务开启成功", "next_url": "base./dms/v1/tasks/"})
         return
 
@@ -265,4 +276,10 @@ class StartTaskView(Api):
         """
         关闭
         """
-        pass
+        try:
+            apscheduler.delete_job(self.task_no)
+        except:
+            pass
+        self.task_obj.status = False
+        db.session.commit()
+        return self.ret(template="200.html", data={"errmsg": "任务关闭成功", "next_url": "base./dms/v1/tasks/"})

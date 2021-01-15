@@ -115,7 +115,7 @@ class TasksModel(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     task_no = db.Column(db.String(128), nullable=False, default=gen_task_no, comment="备注")
-    task_type = db.Column(db.Enum('cron', 'interval'), server_default='cron', nullable=False)
+    task_type = db.Column(db.Enum('cron', 'interval', 'date'), server_default='cron', nullable=False)
     name = db.Column(db.String(128), nullable=True, comment="任务名")
     project_id = db.Column(db.ForeignKey("requirement_model.id"))
     project = db.relationship('RequirementModel', backref=db.backref('tasks_model', lazy='dynamic'))
@@ -128,6 +128,7 @@ class TasksModel(db.Model):
     hour = db.Column(db.Integer, nullable=True, comment="时")
     minute = db.Column(db.Integer, nullable=True, comment="分")
     second = db.Column(db.Integer, nullable=True, comment="秒")
+    status = db.Column(db.Boolean, default=False, comment="状态")
     is_deleted = db.Column(db.Boolean, default=False)
     dt_create = db.Column(db.DateTime, default=time_utils.now_dt)
     dt_update = db.Column(db.DateTime, default=time_utils.now_dt)
