@@ -215,5 +215,5 @@ def save_file(file_type, data, file_name):
 
 
 def gen_task_no():
-    return f"task{valdate_code()}{str(int(time.time))}"
+    return f"task{valdate_code()}{str(int(time.time()))}"
 

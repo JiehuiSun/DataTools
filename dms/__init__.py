@@ -8,6 +8,7 @@
 import time
 import json
 import pymysql
+import datetime
 from openpyxl import Workbook
 from flask import current_app
 
@@ -16,6 +17,45 @@ from base import apscheduler
 from dms.models import TasksModel
 
 from utils import valdate_code, save_file, send_mail
+
+
+class DMS(object):
+    """
+    DMS
+    """
+    dt_now = datetime.datetime.now()
+    yesterday = dt_now - datetime.timedelta(days=1)
+
+    to_day = "{0}-{1}-{2}".format(dt_now.year,
+                                  dt_now.month,
+                                  dt_now.day)
+
+    yesterday = "{0}-{1}-{2}".format(yesterday.year,
+                                     yesterday.month,
+                                     yesterday.day)
+
+    # SQL里的变量, 需要再加
+    """
+    SELECT id AS ID, name AS 名称 FROM table WHERE dt_created > {today_start} AND dt_created < {today_end};
+    """
+    SQL_VARIABLE = {
+        "today_start": f"{to_day} 00:00:00",
+        "today_end": f"{to_day} 23:59:59",
+        "yesterday_start": f"{yesterday} 00:00:00",
+        "yesterday_end": f"{yesterday} 23:59:59",
+    }
+
+    @classmethod
+    def handle_sql(cls, sql):
+        """
+        处理sql
+        """
+        for k, v in cls.SQL_VARIABLE.items():
+            r_k = "{" + k + "}"
+            if r_k in sql:
+                sql = sql.replace(r_k, v)
+
+        return sql
 
 
 def handle_one_sql(sql_list):
@@ -34,7 +74,7 @@ def handle_one_sql(sql_list):
 
     try:
         cursor = client.cursor()
-        cursor.execute(sql_obj.content)
+        cursor.execute(DMS.handle_sql(sql_obj.content))
         cursor.close()
     except Exception as e:
         errmsg = "sql{0}的SQL执行错误: {1}".format(db_obj.id, e)
