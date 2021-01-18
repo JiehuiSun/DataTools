@@ -96,6 +96,7 @@ class SQLModel(db.Model):
     __tablename__ = "sql_model"
 
     id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(128), nullable=True, comment="SQL名")
     project_id = db.Column(db.ForeignKey("requirement_model.id"))
     project = db.relationship('RequirementModel', backref=db.backref('sql_model', lazy='dynamic'))
     database_id = db.Column(db.ForeignKey("database_model.id"))
@@ -105,6 +106,12 @@ class SQLModel(db.Model):
     is_deleted = db.Column(db.Boolean, default=False)
     dt_create = db.Column(db.DateTime, default=time_utils.now_dt)
     dt_update = db.Column(db.DateTime, default=time_utils.now_dt)
+
+    def __repr__(self):
+        return self.name
+
+    def __str__(self):
+        return self.name
 
 
 class TasksModel(db.Model):
@@ -132,3 +139,9 @@ class TasksModel(db.Model):
     is_deleted = db.Column(db.Boolean, default=False)
     dt_create = db.Column(db.DateTime, default=time_utils.now_dt)
     dt_update = db.Column(db.DateTime, default=time_utils.now_dt)
+
+    def __repr__(self):
+        return self.name
+
+    def __str__(self):
+        return self.name
