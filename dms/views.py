@@ -163,7 +163,7 @@ class TasksView(Api):
             return self.query_task()
 
         task_list = TasksModel.query.filter_by(is_deleted=False) \
-            .values("id", "task_no", "comments", "dt_create")
+            .values("id", "task_no", "comments", "dt_create", "name")
 
         jobs = apscheduler.get_jobs()
         job_id_list = [i.id for i in jobs]
@@ -175,6 +175,7 @@ class TasksView(Api):
                 "task_no": i[1],
                 "comments": i[2],
                 "dt_create": i[3],
+                "name": i[4],
             }
 
             if data_dict["task_no"] in job_id_list:
