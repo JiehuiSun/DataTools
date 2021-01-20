@@ -101,7 +101,7 @@ def handle_one_sql(sql_list):
     return True, ret
 
 
-def handle_O2O_sql(sql_list):
+def handle_o2o_sql(sql_list):
     """
     处理一对一的sql
     """
@@ -109,9 +109,7 @@ def handle_O2O_sql(sql_list):
         return False, "未查询到sql"
 
     field_list = list()
-    data_list = list()
     data_dict = collections.OrderedDict()
-    parent_id_list = list()
 
     for sql_obj in sql_list:
         db_obj = sql_obj.database
@@ -197,7 +195,15 @@ def execute_task(task_id, is_show=False, is_export=False):
                 return
 
         elif task_type.type_id == 2:
-            tag, data = handle_O2O_sql(sql_list)
+            tag, data = handle_o2o_sql(sql_list)
+            if not tag:
+                current_app.logger.error(data)
+                if is_show:
+                    return {"template": "db_err.html", "data": {"errmsg": str(data)}}
+                return
+
+        elif task_type.type_id == 3:
+            tag, data = handle_o2m_sql(sql_list)
             if not tag:
                 current_app.logger.error(data)
                 if is_show:
