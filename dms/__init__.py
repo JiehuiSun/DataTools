@@ -161,6 +161,114 @@ def handle_o2o_sql(sql_list):
     return True, ret
 
 
+def handle_o2m_sql(sql_list):
+    """
+    处理一对多的sql
+    """
+    if not sql_list:
+        return False, "未查询到sql"
+
+    field_list = list()
+    data_list = list()
+    data_dict = collections.OrderedDict()
+    parent_list = collections.OrderedDict()
+    sub_list = collections.OrderedDict()
+    """
+    parent_list/sub_list: {sql_id: {
+                                field_list: (ID, 名字, ...),
+                                special_field: {
+                                    1: (id, name, ...),
+                                    }
+                                }
+                            }
+    """
+
+    # 提前将有/无父级分离
+    parent_sql_list = list()
+    sub_sql_list = list()
+    for sql_obj in sql_list:
+        if sql_obj.parent:
+            sub_sql_list.append(sql_obj.id)
+        if not sql_obj.parent:
+            parent_sql_list.append(sql_obj.id)
+
+    for sql_obj in sql_list:
+        db_obj = sql_obj.database
+        client = pymysql.connect(
+            user=db_obj.username,
+            password=db_obj.password,
+            host=db_obj.host,
+            port=db_obj.port,
+            database=db_obj.name
+        )
+
+        try:
+            cursor = client.cursor()
+            sql_content = sql_obj.content
+            if sql_obj.id in sub_sql_list:
+                if "{id_list}" in sql_content:
+                    s_params = {
+                        "id_list": ",".join([str(i) for i in parent_list[sql_obj.parent_id]["data_list"].keys()])
+                    }
+                    sql_content = sql_content.format(**s_params)
+            cursor.execute(DMS.handle_sql(sql_content))
+            cursor.close()
+        except Exception as e:
+            errmsg = "sql{0}的SQL执行错误: {1}".format(db_obj.id, e)
+            return False, errmsg
+        client.close()
+
+        _field_list = [i[0] for i in cursor.description]
+        _data_list = cursor.fetchall()
+        special_field = sql_obj.special_field
+
+        if special_field not in _field_list:
+            errmsg = "sql{0}的SQL没有唯一特殊字段".format(db_obj.id)
+            return False, errmsg
+
+        # 封装数据
+        parent_sql = sql_obj.parent
+        special_field_index = _field_list.index(special_field)
+        p_data_list = collections.OrderedDict()
+        for i in _data_list:
+            if i[special_field_index] in p_data_list:
+                p_data_list[i[special_field_index]].append(i)
+            else:
+                p_data_list[i[special_field_index]] = [i]
+
+        # 有父级跟无父级单独存
+        if parent_sql:
+            sub_list[sql_obj.id] = {
+                "field_list": _field_list,
+                "data_list": p_data_list,
+                "parent_id": parent_sql.id,
+                "special_field_index": special_field_index
+            }
+        else:
+            parent_list[sql_obj.id] = {
+                "field_list": _field_list,
+                "data_list": p_data_list
+            }
+
+    # 整合数据
+    for _, i in sub_list.items():
+        field_list += parent_list[i["parent_id"]]["field_list"]
+        field_list += i["field_list"]
+
+        for _, d in i["data_list"].items():
+            for x in d:
+                for y in parent_list[i["parent_id"]]["data_list"][x[i["special_field_index"]]]:
+                    all_data = y + x
+                    data_list.append(all_data)
+
+    ret = {
+        "field_list": field_list,
+        "data_list": data_list
+    }
+
+    return True, ret
+
+
 def execute_task(task_id, is_show=False, is_export=False):
     """
     执行任务
