@@ -1,8 +1,8 @@
 # DataTools
 
 #### DataTools是数据管理工具
-点击查看 [安装文档] (http://blog.sunjiehui.com/article/14)
-点击查看 [操作使用] (http://blog.sunjiehui.com/article/16)
+点击查看 [安装文档](http://blog.sunjiehui.com/article/14) | [操作使用](http://blog.sunjiehui.com/article/16)
+
 ##### 解决方案:
 * 在线查询sql
 * 导出不同数据格式的查询sql集(包括导出csv/xls)
