@@ -292,31 +292,21 @@ def execute_task(task_id, is_show=False, is_export=False):
 
         task_type = project.task_type
 
+        tag = None
         data = dict()
         # 根据不同任务类型处理
         if task_type.type_id == 1:
             tag, data = handle_one_sql(sql_list)
-            if not tag:
-                current_app.logger.error(data)
-                if is_show:
-                    return {"template": "db_err.html", "data": {"errmsg": str(data)}}
-                return
-
         elif task_type.type_id == 2:
             tag, data = handle_o2o_sql(sql_list)
-            if not tag:
-                current_app.logger.error(data)
-                if is_show:
-                    return {"template": "db_err.html", "data": {"errmsg": str(data)}}
-                return
-
         elif task_type.type_id == 3:
             tag, data = handle_o2m_sql(sql_list)
-            if not tag:
-                current_app.logger.error(data)
-                if is_show:
-                    return {"template": "db_err.html", "data": {"errmsg": str(data)}}
-                return
+
+        if not tag:
+            current_app.logger.error(data)
+            if is_show:
+                return {"template": "db_err.html", "data": {"errmsg": str(data)}}
+            return
 
         print(f"TaskID: {task_id}执行完成..")
 
