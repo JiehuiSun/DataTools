@@ -43,19 +43,20 @@
 
 <script>
   function executeSql() {
-    txt = $("#sql_cmd").val();
-    db_id = "{{ db_id }}"
-//    $.post("{{ url_for('base./dms/v1/sql_window/') }}",{suggest:txt},function(result){
-//      $("#sql_ret").html(result);
-//  });
-    $.ajax({
-      url:"{{ url_for('base./dms/v1/sql_window/') }}",
-      type: "post",
-      contentType: "application/json",
-      data: JSON.stringify({sql_cmd: txt, db_id: db_id}),
-      success:function(result){
-      $("#sql_ret").html(result);
-      }});
+    sql_txt = $("#sql_cmd").val();
+    if (sql_txt == 'undefined' || !sql_txt || !/[^\s]/.test(sql_txt)) {
+      alert("sql不能为空")
+    } else {
+      db_id = "{{ db_id }}"
+      $.ajax({
+        url:"{{ url_for('base./dms/v1/sql_window/') }}",
+        type: "post",
+        contentType: "application/json",
+        data: JSON.stringify({sql_cmd: sql_txt, db_id: db_id}),
+        success:function(result){
+        $("#sql_ret").html(result);
+        }});
+    }
   }
 
 
