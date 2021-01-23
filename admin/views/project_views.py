@@ -27,6 +27,7 @@ class SQLView(AdminBaseView):
         "database": "数据库",
         "content": "SQL",
         "special_field": "特殊字段",
+        "parent_field": "父字段",
         "dt_create": "创建时间",
         "dt_update": "更新时间",
     }
