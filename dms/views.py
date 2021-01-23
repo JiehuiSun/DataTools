@@ -13,7 +13,7 @@ from flask import make_response, send_file
 
 from base import db, apscheduler
 from api import Api
-from dms import add_task
+from dms import add_task, execute_task
 from dms.models import DatabaseModel, TasksModel
 from utils import valdate_code, save_file
 
@@ -161,6 +161,10 @@ class TasksView(Api):
         """
         if self.data.get("id"):
             return self.query_task()
+        if self.data.get("execute_id"):
+            return execute_task(self.data["execute_id"], is_show=True)
+        if self.data.get("export_id"):
+            return execute_task(self.data["export_id"], is_export=True)
 
         task_list = TasksModel.query.filter_by(is_deleted=False) \
             .values("id", "task_no", "comments", "dt_create", "name")
