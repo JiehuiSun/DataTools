@@ -1,7 +1,7 @@
 # DataTools
 
 #### DataTools是数据管理工具
-点击查看 [安装文档](http://blog.sunjiehui.com/article/14) | [操作使用](http://blog.sunjiehui.com/article/16)
+点击查看 [安装文档](http://blog.sunjiehui.com/article/14) | [操作使用](http://blog.sunjiehui.com/article/16) | [项目规划](https://github.com/JiehuiSun/DataTools/issues/16)
 
 ##### 解决方案:
 * 在线查询sql
@@ -41,8 +41,8 @@ ___
     * ~~后台任务列表/创建 已完成~~
     * ~~前台任务列表 已完成~~
     * ~~前台任务详情 已完成~~
-    * 前台任务导出
-    * 前台任务执行
+    * ~~前台任务导出 已完成~~
+    * ~~前台任务执行 已完成~~
     * ~~前台开启任务 已完成~~
     * ~~前台关闭任务 已完成~~
     * ~~启动项目时检查任务是否开启 已完成~~
