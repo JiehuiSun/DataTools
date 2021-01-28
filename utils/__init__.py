@@ -158,7 +158,7 @@ def send_mail(title: str, content: str, user_mail_list: list, attachments: list 
             with app.open_resource(f"../{i}") as fp:
                 msg.attach(i.split("/")[-1], mimetypes.guess_type("aaa.txt")[0], fp.read())
 
-    from datacenter import mail
+    from base import mail
     mail.send(msg)
 
 

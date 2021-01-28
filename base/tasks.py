@@ -8,7 +8,7 @@
 import os
 import importlib
 
-from datacenter.configs import DefaultConfig
+from base.configs import DefaultConfig
 
 
 class InitTasks(object):
