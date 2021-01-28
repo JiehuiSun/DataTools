@@ -105,6 +105,7 @@ class SQLModel(db.Model):
     special_field = db.Column(db.String(64), nullable=False, comment="特殊字段")
     parent_id = db.Column(db.Integer, db.ForeignKey("sql_model.id"))
     parent = db.relationship("SQLModel", remote_side=[id])
+    parent_field = db.Column(db.String(64), nullable=False, comment="父字段")
     is_deleted = db.Column(db.Boolean, default=False)
     dt_create = db.Column(db.DateTime, default=time_utils.now_dt)
     dt_update = db.Column(db.DateTime, default=time_utils.now_dt)
