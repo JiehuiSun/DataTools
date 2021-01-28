@@ -341,12 +341,14 @@ def add_task(task_id, **kwargs):
     """
     添加任务
     """
-    try:
-        apscheduler.add_job(task_id, func=execute_task, args=(task_id,), **kwargs)
-    except Exception as e:
-        current_app.logger.error(f"注册任务失败: {e}")
-        return
-    return True
+    from application import app
+    with app.app_context():
+        try:
+            apscheduler.add_job(task_id, func=execute_task, args=(task_id,), **kwargs)
+        except Exception as e:
+            current_app.logger.error(f"注册任务失败: {e}")
+            return
+        return True
 
 
 def del_task(task_id, **kwargs):
