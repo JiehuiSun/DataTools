@@ -1,4 +1,6 @@
 import os
+import atexit
+import fcntl
 import logging
 from flask import Flask, render_template
 from flask_admin import Admin
@@ -103,8 +105,20 @@ def config_mail(app):
 
 
 def config_apscheduler(app):
-    apscheduler.init_app(app)
-    apscheduler.start()
+    # apscheduler.init_app(app)
+    # apscheduler.start()
+
+    f = open("scheduler.lock", "wb")
+    try:
+        fcntl.flock(f, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        apscheduler.init_app(app)
+        apscheduler.start()
+    except:
+        pass
+    def unlock():
+        fcntl.flock(f, fcntl.LOCK_UN)
+        f.close()
+    atexit.register(unlock)
 
 
 app = create_app()
