@@ -9,7 +9,7 @@ import time
 import pymysql
 from openpyxl import Workbook
 from openpyxl.writer.excel import save_virtual_workbook
-from flask import make_response, send_file
+from flask import make_response, send_file, current_app
 
 from base import db, apscheduler
 from api import Api
@@ -170,6 +170,7 @@ class TasksView(Api):
             .values("id", "task_no", "comments", "dt_create", "name")
 
         jobs = apscheduler.get_jobs()
+        current_app.logger.info(f"当前任务有 ：{jobs}")
         job_id_list = [i.id for i in jobs]
 
         data_list = list()
@@ -228,6 +229,10 @@ class StartTaskView(Api):
     def get(self):
         """
         """
+        current_app.logger.info("接口进入")
+        jobs_list = apscheduler.get_jobs()
+        for i in jobs_list:
+            current_app.logger.info(f"当前存在的任务: {i}")
         self.params_dict = {
             "id": "required str",
             "status": "required str"
@@ -262,6 +267,7 @@ class StartTaskView(Api):
         """
         启动
         """
+        current_app.logger.info(f"正在启动任务-{self.task_no}")
         task_params = dict()
         for k, v in self.params.items():
             if v is not None:
@@ -269,9 +275,14 @@ class StartTaskView(Api):
 
         # 注册到任务APS
         ret = add_task(self.task_no, trigger=self.task_obj.task_type, **task_params)
+        jobs_list = apscheduler.get_jobs()
+        for i in jobs_list:
+            current_app.logger.info(f"启动后的任务有: {i}")
         if not ret:
+            current_app.logger.info(f"任务-{self.task_no}启动失败")
             return self.ret(template="db_err.html", data={"errmsg": "任务不存在或已被删除/关闭"})
         else:
+            current_app.logger.info(f"任务-{self.task_no}启动成功")
             self.task_obj.status = True
             db.session.commit()
             return self.ret(template="200.html", data={"errmsg": "任务开启成功", "next_url": "base./dms/v1/tasks/"})
@@ -281,10 +292,16 @@ class StartTaskView(Api):
         """
         关闭
         """
+        current_app.logger.info(f"正在关闭任务-{self.task_no}")
         try:
             apscheduler.delete_job(self.task_no)
         except:
+            current_app.logger.info(f"任务-{self.task_no}关闭失败")
             pass
+        jobs_list = apscheduler.get_jobs()
+        for i in jobs_list:
+            current_app.logger.info(f"关闭后的任务有: {i}")
         self.task_obj.status = False
+        current_app.logger.info(f"任务-{self.task_no}关闭成功")
         db.session.commit()
         return self.ret(template="200.html", data={"errmsg": "任务关闭成功", "next_url": "base./dms/v1/tasks/"})
