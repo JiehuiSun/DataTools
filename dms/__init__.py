@@ -276,7 +276,7 @@ def execute_task(task_id, is_show=False, is_export=False):
     """
     from application import app
     with app.app_context():
-        print(f"TaskID: {task_id}正在执行..")
+        current_app.logger.info(f"TaskID: {task_id}正在执行..")
         task_obj = TasksModel.query.filter_by(task_no=task_id,
                                             is_deleted=False).first()
         if not task_obj:
@@ -308,7 +308,7 @@ def execute_task(task_id, is_show=False, is_export=False):
                 return {"template": "db_err.html", "data": {"errmsg": str(data)}}
             return
 
-        print(f"TaskID: {task_id}执行完成..")
+        current_app.logger.info(f"TaskID: {task_id}执行完成..")
 
         if is_show:
             return {"template": "sql_ret.html", "data": data}
@@ -341,6 +341,7 @@ def add_task(task_id, **kwargs):
     """
     添加任务
     """
+    current_app.logger.info(f"增加任务, {task_id}")
     from application import app
     with app.app_context():
         try:
@@ -348,6 +349,10 @@ def add_task(task_id, **kwargs):
         except Exception as e:
             current_app.logger.error(f"注册任务失败: {e}")
             return
+        current_app.logger.info("任务增加成功")
+        jobs_list = apscheduler.get_jobs()
+        for i in jobs_list:
+            current_app.logger.info(f"增加后的任务有: {i}")
         return True
 
 
@@ -389,12 +394,16 @@ def all_tasks():
         return ret
 
 def init_tasks():
+    jobs_list = apscheduler.get_jobs()
+    for i in jobs_list:
+        current_app.logger.info(f"初始化时存在的任务: {i}")
+
     task_list = all_tasks()
     for task_id, params in task_list.items():
         ret = add_task(task_id, **params)
         if not ret:
-            print(f"{task_id}注册失败")
+            current_app.logger.info(f"{task_id}注册失败")
         else:
-            print(f"{task_id}注册成功")
+            current_app.logger.info(f"{task_id}注册成功")
 
     return
