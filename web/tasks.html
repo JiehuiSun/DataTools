@@ -111,7 +111,7 @@
       <a href="?id={{ i.id }}">详情</a> |
       <a onclick="execute('{{i.task_no}}')" style="cursor:pointer">查询</a> |
       <a onclick="export_task('{{i.task_no}}')" style="cursor:pointer">导出</a> |
-      {% if i.status == 1 %}
+      {% if i.task_no in job_list %}
         <a href="{{ url_for('base./dms/v1/start_task/') }}?id={{ i.task_no }}&status=0">关闭任务</a>
       {% else %}
         <a href="{{ url_for('base./dms/v1/start_task/') }}?id={{ i.task_no }}&status=1">开启任务</a>

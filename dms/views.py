@@ -192,6 +192,7 @@ class TasksView(Api):
 
         ret = {
             "data_list": data_list,
+            "job_list": job_id_list
         }
         return self.ret(template="tasks.html", data=ret)
 

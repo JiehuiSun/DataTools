@@ -341,9 +341,9 @@ def add_task(task_id, **kwargs):
     """
     添加任务
     """
-    current_app.logger.info(f"增加任务, {task_id}")
     from application import app
     with app.app_context():
+        current_app.logger.info(f"增加任务, {task_id}")
         try:
             apscheduler.add_job(task_id, func=execute_task, args=(task_id,), **kwargs)
         except Exception as e:
@@ -394,16 +394,18 @@ def all_tasks():
         return ret
 
 def init_tasks():
-    jobs_list = apscheduler.get_jobs()
-    for i in jobs_list:
-        current_app.logger.info(f"初始化时存在的任务: {i}")
+    from application import app
+    with app.app_context():
+        jobs_list = apscheduler.get_jobs()
+        for i in jobs_list:
+            current_app.logger.info(f"初始化时存在的任务: {i}")
 
-    task_list = all_tasks()
-    for task_id, params in task_list.items():
-        ret = add_task(task_id, **params)
-        if not ret:
-            current_app.logger.info(f"{task_id}注册失败")
-        else:
-            current_app.logger.info(f"{task_id}注册成功")
+        task_list = all_tasks()
+        for task_id, params in task_list.items():
+            ret = add_task(task_id, **params)
+            if not ret:
+                current_app.logger.info(f"{task_id}注册失败")
+            else:
+                current_app.logger.info(f"{task_id}注册成功")
 
-    return
+        return
