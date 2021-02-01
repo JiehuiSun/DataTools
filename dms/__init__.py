@@ -87,6 +87,7 @@ def handle_one_sql(sql_list):
         cursor.close()
     except Exception as e:
         errmsg = "sql{0}的SQL执行错误: {1}".format(db_obj.id, e)
+        client.close()
         return False, errmsg
     client.close()
 
