@@ -80,6 +80,7 @@ class SQLWindowView(Api):
             cursor.execute(self.data["sql_cmd"])
             cursor.close()
         except Exception as e:
+            client.close()
             return self.ret(template="db_err.html", data={"errmsg": str(e)})
         client.close()
 
