@@ -24,34 +24,37 @@ class DMS(object):
     """
     DMS
     """
-    dt_now = datetime.datetime.now()
-    yesterday = dt_now - datetime.timedelta(days=1)
+    @classmethod
+    def default_value(cls):
+        dt_now = datetime.datetime.now()
+        yesterday = dt_now - datetime.timedelta(days=1)
 
-    to_day = "{0}-{1}-{2}".format(dt_now.year,
-                                  dt_now.month,
-                                  dt_now.day)
+        to_day = "{0}-{1}-{2}".format(dt_now.year,
+                                    dt_now.month,
+                                    dt_now.day)
 
-    yesterday = "{0}-{1}-{2}".format(yesterday.year,
-                                     yesterday.month,
-                                     yesterday.day)
+        yesterday = "{0}-{1}-{2}".format(yesterday.year,
+                                        yesterday.month,
+                                        yesterday.day)
 
-    # SQL里的变量, 需要再加
-    """
-    SELECT id AS ID, name AS 名称 FROM table WHERE dt_created > {today_start} AND dt_created < {today_end};
-    """
-    SQL_VARIABLE = {
-        "today_start": f"{to_day} 00:00:00",
-        "today_end": f"{to_day} 23:59:59",
-        "yesterday_start": f"{yesterday} 00:00:00",
-        "yesterday_end": f"{yesterday} 23:59:59",
-    }
+        # SQL里的变量, 需要再加
+        """
+        SELECT id AS ID, name AS 名称 FROM table WHERE dt_created > {today_start} AND dt_created < {today_end};
+        """
+        SQL_VARIABLE = {
+            "today_start": f"{to_day} 00:00:00",
+            "today_end": f"{to_day} 23:59:59",
+            "yesterday_start": f"{yesterday} 00:00:00",
+            "yesterday_end": f"{yesterday} 23:59:59",
+        }
+        return SQL_VARIABLE
 
     @classmethod
     def handle_sql(cls, sql):
         """
         处理sql
         """
-        for k, v in cls.SQL_VARIABLE.items():
+        for k, v in cls.default_value().items():
             r_k = "{" + k + "}"
             if r_k in sql:
                 sql = sql.replace(r_k, v)
