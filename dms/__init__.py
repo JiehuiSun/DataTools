@@ -17,8 +17,7 @@ from base import apscheduler
 
 from dms.models import TasksModel
 
-from utils import valdate_code, save_file, send_mail
-from utils.phone import Phone
+from utils import valdate_code, save_file, send_mail, Phone, last_month, last_week
 
 
 class DMS(object):
@@ -38,6 +37,9 @@ class DMS(object):
                                         yesterday.month,
                                         yesterday.day)
 
+        last_week_start, last_week_end = last_week()
+        last_month_start, last_month_end = last_month()
+
         # SQL里的变量, 需要再加
         """
         SELECT id AS ID, name AS 名称 FROM table WHERE dt_created > {today_start} AND dt_created < {today_end};
@@ -47,6 +49,10 @@ class DMS(object):
             "today_end": f"{to_day} 23:59:59",
             "yesterday_start": f"{yesterday} 00:00:00",
             "yesterday_end": f"{yesterday} 23:59:59",
+            "last_week_start": f"{last_week_start} 00:00:00",
+            "last_week_end": f"{last_week_end} 23:59:59",
+            "last_month_start": f"{last_month_start} 00:00:00",
+            "last_month_end": f"{last_month_end} 23:59:59",
         }
         return sql_variable
 
