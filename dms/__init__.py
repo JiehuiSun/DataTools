@@ -17,41 +17,61 @@ from base import apscheduler
 
 from dms.models import TasksModel
 
-from utils import valdate_code, save_file, send_mail
+from utils import valdate_code, save_file, send_mail, Phone, last_month, last_week
 
 
 class DMS(object):
     """
     DMS
     """
-    dt_now = datetime.datetime.now()
-    yesterday = dt_now - datetime.timedelta(days=1)
+    @classmethod
+    def default_values(cls):
+        dt_now = datetime.datetime.now()
+        yesterday = dt_now - datetime.timedelta(days=1)
 
-    to_day = "{0}-{1}-{2}".format(dt_now.year,
-                                  dt_now.month,
-                                  dt_now.day)
+        to_day = "{0}-{1}-{2}".format(dt_now.year,
+                                    dt_now.month,
+                                    dt_now.day)
 
-    yesterday = "{0}-{1}-{2}".format(yesterday.year,
-                                     yesterday.month,
-                                     yesterday.day)
+        yesterday = "{0}-{1}-{2}".format(yesterday.year,
+                                        yesterday.month,
+                                        yesterday.day)
 
-    # SQL里的变量, 需要再加
-    """
-    SELECT id AS ID, name AS 名称 FROM table WHERE dt_created > {today_start} AND dt_created < {today_end};
-    """
-    SQL_VARIABLE = {
-        "today_start": f"{to_day} 00:00:00",
-        "today_end": f"{to_day} 23:59:59",
-        "yesterday_start": f"{yesterday} 00:00:00",
-        "yesterday_end": f"{yesterday} 23:59:59",
-    }
+        last_week_start, last_week_end = last_week()
+        last_month_start, last_month_end = last_month()
+
+        # SQL里的变量, 需要再加
+        """
+        SELECT id AS ID, name AS 名称 FROM table WHERE dt_created > {today_start} AND dt_created < {today_end};
+        """
+        sql_variable = {
+            "today_start": f"{to_day} 00:00:00",
+            "today_end": f"{to_day} 23:59:59",
+            "yesterday_start": f"{yesterday} 00:00:00",
+            "yesterday_end": f"{yesterday} 23:59:59",
+            "last_week_start": f"{last_week_start} 00:00:00",
+            "last_week_end": f"{last_week_end} 23:59:59",
+            "last_month_start": f"{last_month_start} 00:00:00",
+            "last_month_end": f"{last_month_end} 23:59:59",
+        }
+        return sql_variable
+
+    @classmethod
+    def default_functions(cls):
+        func_dict = {
+            "encrypt_phone": Phone.encrypt,
+            "decrypt_phone": Phone.decrypt,
+            "encryption_phone": Phone.encryption_phone,
+        }
+
+        return func_dict
 
     @classmethod
     def handle_sql(cls, sql):
         """
         处理sql
         """
-        for k, v in cls.SQL_VARIABLE.items():
+        for k, v in cls.default_values().items():
             r_k = "{" + k + "}"
             if r_k in sql:
                 sql = sql.replace(r_k, v)
@@ -308,6 +328,26 @@ def execute_task(task_id, is_show=False, is_export=False):
             if is_show:
                 return {"template": "db_err.html", "data": {"errmsg": str(data)}}
             return
+
+        # 处理自定义函数的字段(目前根据字段名做处理)
+        need_handle_dict = dict()
+        field_list = data["field_list"]
+        for k, v in DMS.default_functions().items():
+            for i in field_list:
+                if k in i:
+                    i_index = field_list.index(i)
+                    i = i.split(k)[1].strip(" ").strip(":").strip(" ")
+                    data["field_list"][i_index] = i
+                    need_handle_dict[i_index] = v
+
+        data_list = list(data["data_list"])
+        for i_i, i in enumerate(data_list):
+            for k, v in need_handle_dict.items():
+                i = list(i)
+                i[k] = v(i[k])
+                data_list[i_i] = i
+
+        data["data_list"] = data_list
 
         current_app.logger.info(f"TaskID: {task_id}执行完成..")
 
