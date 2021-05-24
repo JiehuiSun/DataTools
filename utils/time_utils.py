@@ -2,7 +2,7 @@
 import pytz
 import time
 import math
-from datetime import datetime
+import datetime
 
 loc_tz = pytz.timezone('Asia/Shanghai')
 utc_tz = pytz.timezone('UTC')
@@ -12,11 +12,11 @@ def now_dt(tzinfo=loc_tz):
     # tz.localize(datetime.now())
     # tz.localize(datetime.fromtimestamp(time.time()))
     # 这里先取当前utc时间，然后加上UTC时区，之后转成当前时区
-    return datetime.utcnow().replace(tzinfo=utc_tz).astimezone(loc_tz)
+    return datetime.datetime.utcnow().replace(tzinfo=utc_tz).astimezone(loc_tz)
 
 
 def str_2_datetime_by_format(dt_str, dt_format='%Y-%m-%d %H:%M:%S'):
-    return loc_tz.localize(datetime.strptime(dt_str, dt_format))
+    return loc_tz.localize(datetime.datetime.strptime(dt_str, dt_format))
 
 
 def datetime_2_str_by_format(dt, dt_format='%Y-%m-%d %H:%M:%S'):
@@ -24,7 +24,7 @@ def datetime_2_str_by_format(dt, dt_format='%Y-%m-%d %H:%M:%S'):
 
 str2tsp = lambda s: int(time.mktime(time.strptime(s, "%Y-%m-%d %H:%M:%S")))
 tsp2str = lambda s: time.strptime("%Y-%m-%d %H:%M:%S", time.localtime(s))
-tsp2dt = lambda s: datetime.fromtimestamp(s)
+tsp2dt = lambda s: datetime.datetime.fromtimestamp(s)
 
 
 # 获取当前时间是第几年的第几个月

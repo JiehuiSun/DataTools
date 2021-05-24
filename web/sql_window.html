@@ -6,12 +6,21 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>SQL窗口</title>
     <script src="https://apps.bdimg.com/libs/jquery/2.1.4/jquery.min.js"></script>
+    <link rel="stylesheet" href="/web/static/js/codemirror-5.2/theme/ambiance.css">
+    <link rel="stylesheet" href="/web/static/js/codemirror-5.2/theme/abcdef.css">
+    <link type="text/css" rel="stylesheet" href="/web/static/js/codemirror-5.2/lib/codemirror.css" />
+    <link type="text/css" rel="stylesheet" href="/web/static/js/codemirror-5.2/addon/hint/show-hint.css" />
+    <script type="text/javascript" src="/web/static/js/codemirror-5.2/lib/codemirror.js"></script>
+    <script type="text/javascript" src="/web/static/js/codemirror-5.2/mode/sql/sql.js"></script>
+    <script type="text/javascript" src="/web/static/js/codemirror-5.2/addon/hint/show-hint.js"></script>
+    <script type="text/javascript" src="/web/static/js/codemirror-5.2/addon/hint/sql-hint.js"></script>
+
   <style>
-    body {
+    body1 {
       text-align: center;
     }
 
-    #sql_cmd {
+    #sql_cmd1 {
       border: 1px solid #d9d9d9;
       padding: 4px 8px;
       width: 50px;
@@ -19,17 +28,19 @@
       width: 500px;
     }
 
-    .div_conter {
+    .div_conter1 {
       text-align: center;
       vertical-align: middle;
       padding: 10px;
     }
+
+    .CodeMirror {border: 1px solid black;}
     </style>
 </head>
 <body>
     <h1>SQL窗口</h1>
     <div class="div_conter">
-      <textarea id=sql_cmd></textarea>
+      <textarea id=sql_cmd name="code"></textarea>
     </div>
 
     <div class="div_conter">
@@ -42,8 +53,17 @@
 </body>
 
 <script>
+    var editor = CodeMirror.fromTextArea(document.getElementById("sql_cmd"), {
+      lineNumbers: true,
+      extraKeys: {"Ctrl": "autocomplete"},
+      mode: {name: "text/x-mysql"},
+      styleActiveLine: true,
+      theme: "abcdef"
+      });
+
   function executeSql() {
-    sql_txt = $("#sql_cmd").val();
+    sql_txt = editor.getValue()
+
     if (sql_txt == 'undefined' || !sql_txt || !/[^\s]/.test(sql_txt)) {
       alert("sql不能为空")
     } else {
@@ -61,7 +81,7 @@
 
 
   function exportSql() {
-    txt = $("#sql_cmd").val();
+    txt = editor.getValue()
     db_id = "{{ db_id }}"
     $.ajax({
       url:"{{ url_for('base./dms/v1/export_sql/') }}",
