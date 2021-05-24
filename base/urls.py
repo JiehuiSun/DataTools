@@ -7,7 +7,7 @@ from flask import Blueprint
 from base.configs import DefaultConfig
 from dms.views import ExportSQLView
 
-instance = Blueprint('base', __name__, template_folder='web')
+instance = Blueprint('base', __name__, template_folder='web', static_folder='web')
 
 urls = ()
 
