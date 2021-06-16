@@ -149,7 +149,7 @@ class ExportSQLView(Api):
         return ret_html
 
     def get(self):
-        resp = make_response(send_file("../{0}".format(self.key)))
+        resp = make_response(send_file("../ex_file/{0}".format(self.key)))
         resp.headers["Content-Disposition"] = 'attachment; filename=export_sql.xlsx'
         resp.headers['Content-Type'] = 'application/x-xlsx'
         return resp

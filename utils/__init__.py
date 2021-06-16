@@ -162,7 +162,7 @@ def send_mail(title: str, content: str, user_mail_list: list, attachments: list 
     from application import app
     if attachments:
         for i in attachments:
-            with app.open_resource(f"../{i}") as fp:
+            with app.open_resource(f"../ex_file/{i}") as fp:
                 msg.attach(i.split("/")[-1], mimetypes.guess_type("aaa.txt")[0], fp.read())
 
     from base import mail
@@ -207,7 +207,10 @@ def save_xlsx_file(data, file_name, sheet_name="Sheet"):
     ws.append(data["field_list"])
 
     for i in data["data_list"]:
-        ws.append(i)
+        try:
+            ws.append(i)
+        except:
+            print(f"content err: {i}")
     wb.save(file_name)
     return file_name
 
@@ -217,7 +220,7 @@ def save_file(file_type, data, file_name):
     保存文件
     """
     if file_type == 1:
-        save_xlsx_file(data, file_name)
+        save_xlsx_file(data, f"ex_file/{file_name}")
     return file_name
 
 
