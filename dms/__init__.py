@@ -25,17 +25,17 @@ class DMS(object):
     DMS
     """
     @classmethod
-    def default_values(cls):
+    def default_value(cls):
         dt_now = datetime.datetime.now()
         yesterday = dt_now - datetime.timedelta(days=1)
 
         to_day = "{0}-{1}-{2}".format(dt_now.year,
-                                    dt_now.month,
-                                    dt_now.day)
+                                      dt_now.month,
+                                      dt_now.day)
 
         yesterday = "{0}-{1}-{2}".format(yesterday.year,
-                                        yesterday.month,
-                                        yesterday.day)
+                                         yesterday.month,
+                                         yesterday.day)
 
         last_week_start, last_week_end = last_week()
         last_month_start, last_month_end = last_month()
@@ -44,7 +44,7 @@ class DMS(object):
         """
         SELECT id AS ID, name AS 名称 FROM table WHERE dt_created > {today_start} AND dt_created < {today_end};
         """
-        sql_variable = {
+        SQL_VARIABLE = {
             "today_start": f"{to_day} 00:00:00",
             "today_end": f"{to_day} 23:59:59",
             "yesterday_start": f"{yesterday} 00:00:00",
@@ -54,7 +54,7 @@ class DMS(object):
             "last_month_start": f"{last_month_start} 00:00:00",
             "last_month_end": f"{last_month_end} 23:59:59",
         }
-        return sql_variable
+        return SQL_VARIABLE
 
     @classmethod
     def default_functions(cls):
@@ -71,7 +71,7 @@ class DMS(object):
         """
         处理sql
         """
-        for k, v in cls.default_values().items():
+        for k, v in cls.default_value().items():
             r_k = "{" + k + "}"
             if r_k in sql:
                 sql = sql.replace(r_k, v)
@@ -104,12 +104,11 @@ def handle_one_sql(sql_list):
     try:
         cursor = client.cursor()
         cursor.execute(DMS.handle_sql(sql_obj.content))
-        cursor.close()
     except Exception as e:
         errmsg = "sql{0}的SQL执行错误: {1}".format(db_obj.id, e)
+        cursor.close()
         client.close()
         return False, errmsg
-    client.close()
 
     field_list = [i[0] for i in cursor.description]
     data_list = cursor.fetchall()
@@ -118,6 +117,8 @@ def handle_one_sql(sql_list):
         "field_list": field_list,
         "data_list": data_list
     }
+    cursor.close()
+    client.close()
 
     return True, ret
 
@@ -272,15 +273,28 @@ def handle_o2m_sql(sql_list):
             }
 
     # 整合数据
+    use_handle_data = dict()
     for _, i in sub_list.items():
         field_list += parent_list[i["parent_id"]]["field_list"]
         field_list += i["field_list"]
 
         for _, d in i["data_list"].items():
             for x in d:
-                for y in parent_list[i["parent_id"]]["data_list"][x[i["special_field_index"]]]:
-                    all_data = y + x
-                    data_list.append(all_data)
+                try:
+                    for y in parent_list[i["parent_id"]]["data_list"][x[i["special_field_index"]]]:
+                        all_data = y + x
+                        data_list.append(all_data)
+                        if i["parent_id"] in use_handle_data:
+                            use_handle_data[i["parent_id"]].append(x[i["special_field_index"]])
+                        else:
+                            use_handle_data[i["parent_id"]] = [x[i["special_field_index"]]]
+                except Exception as e:
+                    pass
+
+    for k, v in use_handle_data.items():
+        not_handle_data = list(set(parent_list[k]["data_list"].keys()) - set(v))
+        for i in not_handle_data:
+            data_list.append(parent_list[k]["data_list"][i][0])
 
     ret = {
         "field_list": field_list,
