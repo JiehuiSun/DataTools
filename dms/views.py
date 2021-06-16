@@ -5,8 +5,11 @@
 # Filename: views.py
 
 
+import json
 import time
 import pymysql
+import asyncio
+import aiomysql
 from openpyxl import Workbook
 from openpyxl.writer.excel import save_virtual_workbook
 from flask import make_response, send_file, current_app
@@ -23,6 +26,7 @@ class DatabasesView(Api):
     数据库
     """
     NEED_LOGIN = False
+
     def get(self):
         """
         列表
@@ -52,6 +56,40 @@ class SQLWindowView(Api):
     sql窗口
     """
     NEED_LOGIN = False
+
+    async def connect_mysql(self, query_obj, sql_cmd, loop):
+        '''
+        连接数据库
+        '''
+
+        client = await aiomysql.connect(
+            host=query_obj.host,
+            user=query_obj.username,
+            password=query_obj.password,
+            db=query_obj.name,
+            charset='utf8',
+            loop=loop)
+
+        async with aiomysql.cursors.SSCursor(client) as cursor:
+            await cursor.execute(sql_cmd)
+
+            data_list = []
+            while True:
+                row = await cursor.fetchone()
+                if not row:
+                    break
+                data_list.append(row)
+
+        if cursor.description:
+            field_list = [i[0] for i in cursor.description]
+        else:
+            field_list = ["ok"]
+
+        self.datas = {
+            "field_list": field_list,
+            "data_list": data_list
+        }
+
     def get(self):
         return self.ret(template="sql_window.html", data=self.data)
 
@@ -68,29 +106,12 @@ class SQLWindowView(Api):
         if not query_obj:
             return self.ret(template="db_err.html")
 
-        client = pymysql.connect(
-            user=query_obj.username,
-            password=query_obj.password,
-            host=query_obj.host,
-            port=query_obj.port,
-            database=query_obj.name
-        )
-        try:
-            cursor = client.cursor()
-            cursor.execute(self.data["sql_cmd"])
-            cursor.close()
-        except Exception as e:
-            client.close()
-            return self.ret(template="db_err.html", data={"errmsg": str(e)})
-        client.close()
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        loop.run_until_complete(self.connect_mysql(query_obj, self.data['sql_cmd'], loop))
+        loop.close()
 
-        field_list = [i[0] for i in cursor.description]
-
-        ret = {
-            "field_list": field_list,
-            "data_list": cursor.fetchall()
-        }
-        return self.ret(template="sql_ret.html", data=ret)
+        return self.ret(template="sql_ret.html", data=self.datas)
 
 
 class ExportSQLView(Api):
@@ -98,6 +119,7 @@ class ExportSQLView(Api):
     导出
     """
     NEED_LOGIN = False
+
     def post(self):
         self.params_dict = {
             "sql_cmd": "required str",
@@ -160,6 +182,7 @@ class TasksView(Api):
     任务
     """
     NEED_LOGIN = False
+
     def get(self):
         """
         列表
@@ -232,6 +255,7 @@ class StartTaskView(Api):
     启动关闭任务
     """
     NEED_LOGIN = False
+
     def get(self):
         """
         """
