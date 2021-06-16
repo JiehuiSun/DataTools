@@ -123,6 +123,10 @@ class ExportSQLView(Api):
             cursor.execute(self.data["sql_cmd"])
             cursor.close()
         except Exception as e:
+            try:
+                send_ding_errmsg(errmsg=str(e), task_id=task_id, params=self.data["sql_cmd"])
+            except:
+                pass
             return self.ret(template="db_err.html", data={"errmsg": str(e)})
         client.close()
 

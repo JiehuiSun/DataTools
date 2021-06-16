@@ -89,3 +89,4 @@ uwsgi.ini
 *.pid
 
 local_config.py
+*.xlsx

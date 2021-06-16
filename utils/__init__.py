@@ -95,6 +95,10 @@ class DBSql(object):
             self.cursor.execute(sql_text)
             data_dict = self.fetch_all_to_dict(self.cursor)
         except Exception as e:
+            try:
+                send_ding_errmsg(errmsg=str(e), task_id=task_id, params=sql_text)
+            except:
+                pass
             current_app.logger.error(f">> Sql错误: {sql_text} \n {e}")
             raise SyntaxError(f"Sql错误.. {sql_text} \n {e}")
 
@@ -220,3 +224,27 @@ def save_file(file_type, data, file_name):
 def gen_task_no():
     return f"task{valdate_code()}{str(int(time.time()))}"
 
+
+def send_ding_errmsg(errmsg, task_id=None, params=None):
+    """
+    发送叮叮报警机器人
+    """
+    webhook_url = current_app.config["DING_MSG_URL"]
+    headers = {"Content-Type": "application/json ;charset=utf-8"}
+
+    msg = f"错误信息:\n"
+    if task_id:
+        msg += f"TaskID: {task_id}\n"
+    if params:
+        msg += f"Params: {params}\n"
+    msg += f"Return: {errmsg}"
+
+    data = {
+        "msgtype": "text",
+        "text": {
+            "content": msg
+        }
+    }
+
+    requests.post(webhook_url, headers=headers, data=json.dumps(data))
+    return

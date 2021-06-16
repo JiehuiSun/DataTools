@@ -17,7 +17,7 @@ from base import apscheduler
 
 from dms.models import TasksModel
 
-from utils import valdate_code, save_file, send_mail, Phone, last_month, last_week
+from utils import valdate_code, save_file, send_mail, Phone, last_month, last_week, send_ding_errmsg
 
 
 class DMS(object):
@@ -302,6 +302,10 @@ def execute_task(task_id, is_show=False, is_export=False):
                                             is_deleted=False).first()
         if not task_obj:
             errmsg = "TaskID: {0} 执行失败, ID错误或已被删除".format(task_id)
+            try:
+                send_ding_errmsg(errmsg=errmsg, task_id=task_id)
+            except:
+                pass
             current_app.logger.error(errmsg)
             if is_show:
                 return {"template": "db_err.html", "data": {"errmsg": str(errmsg)}}
@@ -324,6 +328,10 @@ def execute_task(task_id, is_show=False, is_export=False):
             tag, data = handle_o2m_sql(sql_list)
 
         if not tag:
+            try:
+                send_ding_errmsg(errmsg=str(data), task_id=task_id, params=sql_list)
+            except:
+                pass
             current_app.logger.error(data)
             if is_show:
                 return {"template": "db_err.html", "data": {"errmsg": str(data)}}
@@ -344,7 +352,10 @@ def execute_task(task_id, is_show=False, is_export=False):
         for i_i, i in enumerate(data_list):
             for k, v in need_handle_dict.items():
                 i = list(i)
-                i[k] = v(i[k])
+                try:
+                    i[k] = v(i[k])
+                except:
+                    pass
                 data_list[i_i] = i
 
         data["data_list"] = data_list
@@ -360,6 +371,7 @@ def execute_task(task_id, is_show=False, is_export=False):
             ret_html = "<a href='{0}'>点击下载</a>".format(file_name)
             return ret_html
         else:
+            current_app.logger.info("准备发送邮件..")
             # 发送邮件
             file_name = "{0}-{1}-{2}.xlsx".format(project.name,str(int(time.time())), valdate_code())
             file_name = save_file(1, data, file_name)
@@ -368,6 +380,7 @@ def execute_task(task_id, is_show=False, is_export=False):
                       content=project.comments,
                       user_mail_list=project.user_mail_list.split(","),
                       attachments=[file_name])
+            current_app.logger.info("发送成功..")
             return True
 
 
@@ -386,8 +399,12 @@ def add_task(task_id, **kwargs):
     with app.app_context():
         current_app.logger.info(f"增加任务, {task_id}")
         try:
-            apscheduler.add_job(task_id, func=execute_task, args=(task_id,), **kwargs)
+            apscheduler.add_job(task_id, func=execute_task, args=(task_id,), **kwargs, max_instances=20)
         except Exception as e:
+            try:
+                send_ding_errmsg(errmsg=str(e), task_id=task_id, params=kwargs)
+            except:
+                pass
             current_app.logger.error(f"注册任务失败: {e}")
             return
         current_app.logger.info("任务增加成功")
