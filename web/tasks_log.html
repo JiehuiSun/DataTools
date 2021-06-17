@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/png" sizes="144x144" href="https://static.mumway.com/saas/payShare/logo_hymm.png"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@3.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    #table td {
+      border: 1px solid #d9d9d9;
+      padding: 4px 8px;
+      width: 50px;
+    }
+
+    #table .content {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    #table {
+      border-collapse: collapse;
+      min-width: 210px;
+      width: 1000px;
+      border-collapse:collapse;
+      table-layout:fixed;
+      word-break:break-all;
+      margin-top: 50px;
+    }
+
+    .content-td {
+      font-size: 12px;
+    }
+
+    #caption {
+      font-size: 28px;
+      margin: 10px;
+    }
+
+    td span {
+      margin-left: 7px;
+    }
+
+    td a {
+      text-decoration: none;
+    }
+
+    .header-td {
+      height: 27px;
+      white-space: nowrap;
+    }
+
+    table tr:nth-child(even){
+        background: #eeeeee;
+      }
+
+    .zhezhao{
+      z-index: 4;
+      position: fixed;
+      left: 0px;
+      top: 0px;
+      width: 100%;
+      height: 100%;
+    }
+
+    .tankuang{
+      overflow: scroll;
+      border:1px solid #000;
+      position: relative;
+      background: #fff;
+      width: 50%;
+      height: 80%;
+      border-radius: 5px;
+      margin: 5% auto;
+    }
+
+
+    #header{
+      height: 40px;
+    }
+
+    #header-right{
+      position: fixed;
+      width: 25px;
+      height: 25px;
+      border-radius: 5px;
+      background: red;
+      color: #fff;
+      right: 485px;
+      top: 100px;
+      text-align: center;
+    }
+
+    .pagination>.active>span:hover {
+      z-index: -1;
+    }
+
+    .aa {
+      width: 202px;
+      padding: 0 15px 0 15px;
+    }
+    
+
+  </style>
+  <title>任务日志</title>
+</head>
+
+<body>
+
+  
+  <div align="center">
+    <h2>任务日志</h2>
+    <br/>
+    <div style="width: 1000px;">
+      <div class="col-lg-2 aa">
+        <input type="text" class="form-control" placeholder="任务ID" aria-describedby="basic-addon1" id="s_task_id">
+      </div>
+      <div class="col-lg-2 aa">
+        <input type="text" class="form-control" placeholder="任务名称" aria-describedby="basic-addon1" id="s_task_name">
+      </div>
+
+      <div class="col-lg-2 aa">
+        <input type="text" class="form-control" placeholder="收件人" aria-describedby="basic-addon1" id="s_recipient">
+      </div>
+      <div class="btn-group col-lg-2" style="width: 116px;">
+          <button type="button" class="btn btn-default" value="" id="s_handle_type">类型</button>
+          <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            <span class="caret"></span>
+            <span class="sr-only"></span>
+          </button>
+          <ul class="dropdown-menu" id="s_handle_type">
+            <li><a href="#" value="1" onclick="click_type(this)">查询</a></li>
+            <li role="separator" class="divider"></li>
+            <li><a href="#" value="2" onclick="click_type(this)">定时</a></li>
+            <li role="separator" class="divider"></li>
+            <li><a href="#" value="3" onclick="click_type(this)">导出</a></li>
+          </ul>
+      </div>
+      <div class="btn-group col-lg-1" style="width: 136px;">
+          <button type="button" class="btn btn-default" value="" id="s_status">状态</button>
+          <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            <span class="caret"></span>
+            <span class="sr-only"></span>
+          </button>
+          <ul class="dropdown-menu">
+            <li><a href="#" value="1" onclick="click_status(this)">正常</a></li>
+            <li role="separator" class="divider"></li>
+            <li><a href="#" value="2" onclick="click_status(this)">异常</a></li>
+          </ul>
+        </div>
+      <div class="btn-group col-lg-1" role="group" style="margin-left: 10px;">
+        <button type="button" class="btn btn-info" style="background-color: #337ab7;" onclick="s_btn()">搜索</button>
+      </div>
+    </div>
+    <br/>
+    <hr>
+
+  <table id="table" align="center" class="bootstrap-table">
+  <!-- <caption id="caption" class="div_conter">任务日志</caption> -->
+
+
+
+  <colgroup id="colgroup">
+  </colgroup>
+
+
+  <tr style="height: 33px;">
+    <td class="header-td">任务ID</td>
+    <td class="header-td">任务名称</td>
+    <td class="header-td" style="width: 30px;">执行类型</td>
+    <td class="header-td">发送时间</td>
+    <td class="header-td">收件人</td>
+    <td class="header-td">返回信息</td>
+    <td class="header-td" style="width: 30px;">状态</td>
+  </tr>
+
+  {% for i in data_list %}
+    <tr style="height: 33px;" class="content-td">
+      <!-- {% for j in i %}
+        <td>{{ j }}</td>
+      {% endfor %} -->
+
+      <td class="header-td" title="{{ i.task_no }}" style="width: 55px;">{{ i.task_no }}</td>
+      <td class="header-td content" title="{{ i.task_name }}">{{ i.task_name }}</td>
+      <td class="header-td">
+        {% if i.ex_type == 1 %}
+        <span>查询</span>
+        {% elif i.ex_type == 2 %}
+        <span>导出</span>
+        {% else %}
+        <span>定时</span>
+        {% endif %}
+      </td>
+      <td class="header-td">{{ i.dt_handled }}</td>
+      <td class="header-td content" title="{{ i.recipient }}">{{ i.recipient }}</td>
+      <td class="header-td content" title="{{ i.return_info }}" width="100px" onclick="query_detail(`'{{i.return_info}}'`)" style="cursor:pointer">{{ i.return_info }}</td>
+      <td class="header-td">{% if i.is_successful == 1 %}<span>正常</span>{% else %}<span style="color: red;">异常</span>{% endif %}</td>
+
+    </tr>
+  {% endfor %}
+  </table>
+</div>
+
+  <div class="container" style="text-align:center">
+    <div class="myPagination"></div>
+  </div>
+
+  <div class="zhezhao" id='zhezhao'>
+    <div class="tankuang">
+      <div id="header">
+        <!--<span>我是弹窗</span>-->
+        <div id="header-right" onclick="hidder()">x</div>
+      </div>
+      <div id="ret">
+      </div>
+    </div>
+  </div>
+
+  <script src="https://www.jq22.com/jquery/jquery-1.10.2.js"></script>
+  <script src="/web/static/js/Pagination.js"></script>
+  <script type="text/javascript">
+    document.getElementById('zhezhao').style.display="none";
+    u = window.location.href
+    if (u.includes("page_num")){
+      page = parseInt(u.split("page_num=", 2)[1].split("&",1)[0])
+    }else{
+      var page = 1;
+    }
+
+
+    $(".myPagination").Pagination({
+        page:page,
+        count: "{{total_size}}",
+		    groups: "{{page_size}}",
+        onPageChange:function (page) {
+          console.log(page)
+          p = "page_num="+page+"&page_size={{page_size}}"
+          old_url = window.location.href
+          var new_url;
+          if(old_url.includes("?")){
+            if(old_url.includes("page_num")){
+              new_url = old_url.split("page_num", 1) + p
+            }else{
+              new_url = old_url + "&" + p
+            }
+
+          }else{
+            new_url = old_url + "?" + p
+          }
+          window.open(new_url, "_self")
+        }
+    });
+
+    function query_detail(msg){
+				document.getElementById('zhezhao').style.display="";
+          $("#ret").html(msg);
+          }
+
+			function hidder(){
+				document.getElementById('zhezhao').style.display="none";
+			}
+
+      function s_btn(){
+        // 获取搜索内容
+        var s_task_id = document.getElementById('s_task_id').value
+        var s_task_name = document.getElementById('s_task_name').value
+        var s_handle_type = document.getElementById('s_handle_type').value
+        var s_recipient = document.getElementById('s_recipient').value
+        var s_status = document.getElementById('s_status').value
+
+        task_log_url = "{{ url_for('base./dms/v1/task_log/') }}?"
+        task_log_url = task_log_url + "task_no=" + s_task_id
+        task_log_url = task_log_url + "&task_name=" + s_task_name
+        task_log_url = task_log_url + "&recipient=" + s_recipient
+        task_log_url = task_log_url + "&status=" + s_status
+        task_log_url = task_log_url + "&handle_type=" + s_handle_type
+
+        window.open(task_log_url, "_self")
+        console.log(task_log_url)
+      }
+
+      function click_status(t_obj){
+        document.getElementById("s_status").innerText = t_obj.text
+        document.getElementById("s_status").value = t_obj.attributes["value"].nodeValue
+      }
+
+      function click_type(t_obj){
+        document.getElementById("s_handle_type").innerText = t_obj.text
+        document.getElementById("s_handle_type").value = t_obj.attributes["value"].nodeValue
+
+}
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/jquery@1.12.4/dist/jquery.min.js" integrity="sha384-nvAa0+6Qg9clwYCGGPpDQLVpLNn0fRaROjHqs13t4Ggj3Ez50XnGQqc/r8MhnRDZ" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@bootcss/v3.bootcss.com@1.0.8/dist/js/bootstrap.min.js"></script>
+  
+</body>
+
+</html>

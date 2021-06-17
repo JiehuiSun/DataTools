@@ -19,6 +19,10 @@ class ProjectView(AdminBaseView):
         "dt_update": "更新时间",
     }
 
+    AdminBaseView.form_excluded_columns += (
+        "sql_model", "tasks_model"
+    )
+
 
 class SQLView(AdminBaseView):
 
@@ -47,6 +51,6 @@ class TaskView(AdminBaseView):
         "dt_update": "更新时间",
     }
 
-    form_excluded_columns = (
-        "is_deleted", "dt_update", "dt_create", "id", "task_no", "status"
+    AdminBaseView.form_excluded_columns += (
+        "task_no", "status", "tasks_log_model"
     )

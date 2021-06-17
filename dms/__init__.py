@@ -15,9 +15,9 @@ import collections
 from openpyxl import Workbook
 from flask import current_app
 
-from base import apscheduler
+from base import apscheduler, db
 
-from dms.models import TasksModel
+from dms.models import TasksModel, TasksLogModel
 
 from utils import valdate_code, save_file, send_mail, Phone, last_month, last_week, send_ding_errmsg
 
@@ -323,11 +323,38 @@ def handle_o2m_sql(sql_list):
     return True, ret
 
 
+def write_task_log(ex_type, task_obj, status, return_info=None, dt_handled=None, recipient=None):
+    """
+    更新任务日志(可写异步)
+    """
+    data_params = {
+        "task_no": task_obj.task_no,
+        "task": task_obj,
+        "ex_type": ex_type,
+        "is_successful": status,
+    }
+    if return_info:
+        data_params["return_info"] = return_info
+    if dt_handled:
+        data_params["dt_handled"] = dt_handled
+    if recipient:
+        data_params["recipient"] = recipient
+    db.session.add(TasksLogModel(**data_params))
+    db.session.commit()
+
+
 def execute_task(task_id, is_show=False, is_export=False):
     """
     执行任务
     parasm: task_id: TasksModel.task_no
     """
+    dt_now = datetime.datetime.now()
+    if is_show:
+        ex_type = 1
+    elif is_export:
+        ex_type = 2
+    else:
+        ex_type = 3
     from application import app
     with app.app_context():
         current_app.logger.info(f"TaskID: {task_id}正在执行..")
@@ -366,6 +393,8 @@ def execute_task(task_id, is_show=False, is_export=False):
             except:
                 pass
             current_app.logger.error(data)
+            # 日志
+            write_task_log(ex_type, task_obj, False, str(data), dt_now)
             if is_show:
                 return {"template": "db_err.html", "data": {"errmsg": str(data)}}
             return
@@ -396,24 +425,39 @@ def execute_task(task_id, is_show=False, is_export=False):
         current_app.logger.info(f"TaskID: {task_id}执行完成..")
 
         if is_show:
+            write_task_log(ex_type, task_obj, True, "查询成功", dt_now)
             return {"template": "sql_ret.html", "data": data}
         elif is_export:
-            file_name = "{0}-{1}.xlsx".format(str(int(time.time())), valdate_code())
-            file_name = save_file(1, data, file_name)
+            ret_msg = "执行成功"
+            status = True
+            try:
+                file_name = "{0}-{1}.xlsx".format(str(int(time.time())), valdate_code())
+                file_name = save_file(1, data, file_name)
 
-            ret_html = "<a href='{0}'>点击下载</a>".format(file_name)
+                ret_html = "<a href='{0}'>点击下载</a>".format(file_name)
+            except Exception as e:
+                ret_msg = str(e)
+                status = False
+            write_task_log(ex_type, task_obj, status, ret_msg, dt_now)
             return ret_html
         else:
+            ret_msg = "发送成功"
+            status = True
             current_app.logger.info("准备发送邮件..")
             # 发送邮件
-            file_name = "{0}-{1}-{2}.xlsx".format(project.name, str(int(time.time())), valdate_code())
-            file_name = save_file(1, data, file_name)
+            try:
+                file_name = "{0}-{1}-{2}.xlsx".format(project.name, str(int(time.time())), valdate_code())
+                file_name = save_file(1, data, file_name)
 
-            send_mail(title=project.name,
-                      content=project.comments,
-                      user_mail_list=project.user_mail_list.split(","),
-                      attachments=[file_name])
-            current_app.logger.info("发送成功..")
+                send_mail(title=project.name,
+                        content=project.comments,
+                        user_mail_list=project.user_mail_list.split(","),
+                        attachments=[file_name])
+                current_app.logger.info("发送成功..")
+            except Exception as e:
+                ret_msg = str(e)
+                status = False
+            write_task_log(ex_type, task_obj, status, ret_msg, dt_now, project.user_mail_list.split(","))
             return True
 
 

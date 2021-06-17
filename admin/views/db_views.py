@@ -23,3 +23,7 @@ class DBView(AdminBaseView):
     column_exclude_list = (
         "host", "username", "password", "port", "random_code", "is_deleted", "dt_update"
     )
+
+    form_excluded_columns = (
+        "is_deleted", "dt_update", "dt_create", "id", "random_code", "sql_model"
+    )
