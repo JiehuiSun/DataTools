@@ -67,7 +67,12 @@
     <td>{{ i.name }}</td>
     <td>{{ i.comments }}</td>
     <td>{{ i.dt_create }}</td>
-    <td><a href="{{ url_for('base./dms/v1/sql_window/') }}?db_id={{ i.id }}">连接</a></td>
+    <td>
+      <a href="{{ url_for('base./dms/v1/sql_window/') }}?db_id={{ i.id }}">连接</a>|
+      {% if i.dt_comments != "本机" %}
+        <a href="{{ url_for('base./dms/v1/init_database/') }}?db_id={{ i.id }}">初始化</a>
+      {% endif %}
+    </td>
   </tr>
   {% endfor %}
   </table>

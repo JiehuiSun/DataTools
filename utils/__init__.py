@@ -95,6 +95,10 @@ class DBSql(object):
             self.cursor.execute(sql_text)
             data_dict = self.fetch_all_to_dict(self.cursor)
         except Exception as e:
+            try:
+                send_ding_errmsg(errmsg=str(e), task_id=task_id, params=sql_text)
+            except:
+                pass
             current_app.logger.error(f">> Sql错误: {sql_text} \n {e}")
             raise SyntaxError(f"Sql错误.. {sql_text} \n {e}")
 
@@ -158,7 +162,7 @@ def send_mail(title: str, content: str, user_mail_list: list, attachments: list 
     from application import app
     if attachments:
         for i in attachments:
-            with app.open_resource(f"../{i}") as fp:
+            with app.open_resource(f"../ex_file/{i}") as fp:
                 msg.attach(i.split("/")[-1], mimetypes.guess_type("aaa.txt")[0], fp.read())
 
     from base import mail
@@ -203,7 +207,10 @@ def save_xlsx_file(data, file_name, sheet_name="Sheet"):
     ws.append(data["field_list"])
 
     for i in data["data_list"]:
-        ws.append(i)
+        try:
+            ws.append(i)
+        except:
+            print(f"content err: {i}")
     wb.save(file_name)
     return file_name
 
@@ -213,10 +220,34 @@ def save_file(file_type, data, file_name):
     保存文件
     """
     if file_type == 1:
-        save_xlsx_file(data, file_name)
+        save_xlsx_file(data, f"ex_file/{file_name}")
     return file_name
 
 
 def gen_task_no():
     return f"task{valdate_code()}{str(int(time.time()))}"
 
+
+def send_ding_errmsg(errmsg, task_id=None, params=None):
+    """
+    发送叮叮报警机器人
+    """
+    webhook_url = current_app.config["DING_MSG_URL"]
+    headers = {"Content-Type": "application/json ;charset=utf-8"}
+
+    msg = f"错误信息:\n"
+    if task_id:
+        msg += f"TaskID: {task_id}\n"
+    if params:
+        msg += f"Params: {params}\n"
+    msg += f"Return: {errmsg}"
+
+    data = {
+        "msgtype": "text",
+        "text": {
+            "content": msg
+        }
+    }
+
+    requests.post(webhook_url, headers=headers, data=json.dumps(data))
+    return

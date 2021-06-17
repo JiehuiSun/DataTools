@@ -5,8 +5,11 @@
 # Filename: views.py
 
 
+import json
 import time
 import pymysql
+import asyncio
+import aiomysql
 from openpyxl import Workbook
 from openpyxl.writer.excel import save_virtual_workbook
 from flask import make_response, send_file, current_app
@@ -23,6 +26,7 @@ class DatabasesView(Api):
     数据库
     """
     NEED_LOGIN = False
+
     def get(self):
         """
         列表
@@ -52,6 +56,40 @@ class SQLWindowView(Api):
     sql窗口
     """
     NEED_LOGIN = False
+
+    async def connect_mysql(self, query_obj, sql_cmd, loop):
+        '''
+        连接数据库
+        '''
+
+        client = await aiomysql.connect(
+            host=query_obj.host,
+            user=query_obj.username,
+            password=query_obj.password,
+            db=query_obj.name,
+            charset='utf8',
+            loop=loop)
+
+        async with aiomysql.cursors.SSCursor(client) as cursor:
+            await cursor.execute(sql_cmd)
+
+            data_list = []
+            while True:
+                row = await cursor.fetchone()
+                if not row:
+                    break
+                data_list.append(row)
+
+        if cursor.description:
+            field_list = [i[0] for i in cursor.description]
+        else:
+            field_list = ["ok"]
+
+        self.datas = {
+            "field_list": field_list,
+            "data_list": data_list
+        }
+
     def get(self):
         return self.ret(template="sql_window.html", data=self.data)
 
@@ -68,29 +106,12 @@ class SQLWindowView(Api):
         if not query_obj:
             return self.ret(template="db_err.html")
 
-        client = pymysql.connect(
-            user=query_obj.username,
-            password=query_obj.password,
-            host=query_obj.host,
-            port=query_obj.port,
-            database=query_obj.name
-        )
-        try:
-            cursor = client.cursor()
-            cursor.execute(self.data["sql_cmd"])
-            cursor.close()
-        except Exception as e:
-            client.close()
-            return self.ret(template="db_err.html", data={"errmsg": str(e)})
-        client.close()
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        loop.run_until_complete(self.connect_mysql(query_obj, self.data['sql_cmd'], loop))
+        loop.close()
 
-        field_list = [i[0] for i in cursor.description]
-
-        ret = {
-            "field_list": field_list,
-            "data_list": cursor.fetchall()
-        }
-        return self.ret(template="sql_ret.html", data=ret)
+        return self.ret(template="sql_ret.html", data=self.datas)
 
 
 class ExportSQLView(Api):
@@ -98,6 +119,7 @@ class ExportSQLView(Api):
     导出
     """
     NEED_LOGIN = False
+
     def post(self):
         self.params_dict = {
             "sql_cmd": "required str",
@@ -123,6 +145,10 @@ class ExportSQLView(Api):
             cursor.execute(self.data["sql_cmd"])
             cursor.close()
         except Exception as e:
+            try:
+                send_ding_errmsg(errmsg=str(e), task_id=task_id, params=self.data["sql_cmd"])
+            except:
+                pass
             return self.ret(template="db_err.html", data={"errmsg": str(e)})
         client.close()
 
@@ -145,7 +171,7 @@ class ExportSQLView(Api):
         return ret_html
 
     def get(self):
-        resp = make_response(send_file("../{0}".format(self.key)))
+        resp = make_response(send_file("../ex_file/{0}".format(self.key)))
         resp.headers["Content-Disposition"] = 'attachment; filename=export_sql.xlsx'
         resp.headers['Content-Type'] = 'application/x-xlsx'
         return resp
@@ -156,6 +182,7 @@ class TasksView(Api):
     任务
     """
     NEED_LOGIN = False
+
     def get(self):
         """
         列表
@@ -228,6 +255,7 @@ class StartTaskView(Api):
     启动关闭任务
     """
     NEED_LOGIN = False
+
     def get(self):
         """
         """
@@ -307,3 +335,109 @@ class StartTaskView(Api):
         current_app.logger.info(f"任务-{self.task_no}关闭成功")
         db.session.commit()
         return self.ret(template="200.html", data={"errmsg": "任务关闭成功", "next_url": "base./dms/v1/tasks/"})
+
+
+class DataBaseInitView(Api):
+    """
+    sql初始化
+    """
+    NEED_LOGIN = False
+
+    def connect_mysql(self, query_obj, sql_cmd):
+        '''
+        连接数据库
+        '''
+        client = pymysql.connect(
+            user=query_obj.username,
+            password=query_obj.password,
+            host=query_obj.host,
+            port=query_obj.port,
+            database=query_obj.name
+        )
+        try:
+            cursor = client.cursor()
+            cursor.execute(sql_cmd)
+            cursor.close()
+        except Exception as e:
+            current_app.logger.info(f"初始化数据库错误 ：{str(e)}")
+            return self.ret(template="db_err.html", data={"errmsg": str(e)})
+        client.close()
+        return cursor
+
+    def create_table_sql(self, query_obj, query_obj2):
+        '''
+        获取创建表语句
+        '''
+        # 获取本地 所有表名称
+        sql_cmd = "show tables;"
+        cursor = self.connect_mysql(query_obj2, sql_cmd)
+        main_tables_list = [i[0] for i in cursor.fetchall()]
+        if not main_tables_list:
+            return self.ret(template="db_err.html", data={"errmsg": "be not in tables"})
+
+        # 获取所有表名称
+        sql_cmd = "show tables;"
+        cursor = self.connect_mysql(query_obj, sql_cmd)
+        tables = cursor.fetchall()
+        if not tables:
+            return self.ret(template="db_err.html", data={"errmsg": "be not in tables"})
+
+        # 通过表名获取此表的建表语句
+        create_table_list = list()
+        for i in tables:
+            i = i[0]
+            if "-" in query_obj.name:
+                query_obj_name = query_obj.name.replace("-","_")
+                new_table_name = f"{query_obj_name}_{i}"
+            else:
+                new_table_name = f"{query_obj.name}_{i}"
+
+            # 查询表是否存在
+            if new_table_name in main_tables_list:
+                continue
+
+            sql_cmd = f"show create table {i};"
+            cursor = self.connect_mysql(query_obj, sql_cmd)
+            create_table_sql = cursor.fetchall()[0][1]
+            if not create_table_sql:
+                continue
+            try:
+                charset = create_table_sql.split("CHARSET=")[1].split(" ")[0]
+            except:
+                charset = "utf8"
+            try:
+                comment = create_table_sql.split('COMMENT="')[1].split('"')[0]
+            except:
+                comment = i
+
+            create_table_sql = create_table_sql.replace(i, new_table_name)
+            # 处理创建语句
+            creat_table_collocation = f"ENGINE=FEDERATED DEFAULT CHARSET={charset} COMMENT='{comment}' \
+            CONNECTION='mysql://{query_obj.username}:{query_obj.password}@{query_obj.host}:{query_obj.port}/{query_obj.name}/{i}';"
+
+            create_table = f'{create_table_sql.split("ENGINE")[0]}{creat_table_collocation}'
+            create_table_list.append(create_table)
+
+        return create_table_list
+
+    def get(self):
+        self.params_dict = {
+            "db_id": "required str"
+        }
+        self.ver_params()
+
+        query_obj = DatabaseModel.query.filter_by(id=self.data["db_id"], is_deleted=False).first()
+
+        if not query_obj:
+            return self.ret(template="db_err.html")
+
+        query_obj2 = DatabaseModel.query.filter_by(comments='本机', is_deleted=False).first()
+        # 获取该库的所有建表语句
+        create_table_all_list = self.create_table_sql(query_obj, query_obj2)
+        # 创建表
+        if not query_obj2:
+            return self.ret(template="db_err.html")
+
+        for item in create_table_all_list:
+            res = self.connect_mysql(query_obj2, item)
+        return self.ret(template="sql_ret.html", data="ok")

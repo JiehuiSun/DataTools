@@ -24,6 +24,7 @@ class SQLView(AdminBaseView):
 
     column_labels = {
         "project": "项目",
+        "name": "名字",
         "database": "数据库",
         "content": "SQL",
         "special_field": "特殊字段",

@@ -1,6 +1,6 @@
 # 这里将url进行统一的管理，每添加一个接口，只需要在urls中添加即可
 
-from dms.views import DatabasesView, SQLWindowView, ExportSQLView, TasksView, StartTaskView
+from dms.views import DatabasesView, SQLWindowView, ExportSQLView, TasksView, StartTaskView, DataBaseInitView
 
 
 MODEL_NAME = "dms"
@@ -15,6 +15,7 @@ re_routing_dict = dict()
 v1_routing_dict["databases"] = DatabasesView
 v1_routing_dict["sql_window"] = SQLWindowView
 v1_routing_dict["export_sql"] = ExportSQLView
+v1_routing_dict["init_database"] = DataBaseInitView
 
 # task
 v1_routing_dict["tasks"] = TasksView
