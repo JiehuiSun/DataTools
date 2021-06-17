@@ -403,13 +403,18 @@ class DataBaseInitView(Api):
             try:
                 charset = create_table_sql.split("CHARSET=")[1].split(" ")[0]
             except:
-                charset = "utf8"
+                charset = "utf8mb4"
             try:
                 comment = create_table_sql.split('COMMENT="')[1].split('"')[0]
             except:
                 comment = i
 
             create_table_sql = create_table_sql.replace(i, new_table_name)
+
+            # 修改字符
+            create_table_sql = create_table_sql.replace("general_ci", "0900_ai_ci")
+            create_table_sql = create_table_sql.replace("utf8", "utf8mb4")
+
             # 处理创建语句
             creat_table_collocation = f"ENGINE=FEDERATED DEFAULT CHARSET={charset} COMMENT='{comment}' \
             CONNECTION='mysql://{query_obj.username}:{query_obj.password}@{query_obj.host}:{query_obj.port}/{query_obj.name}/{i}';"
