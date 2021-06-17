@@ -18,7 +18,7 @@ from base import db, apscheduler
 from api import Api
 from dms import add_task, execute_task
 from dms.models import DatabaseModel, TasksModel
-from utils import valdate_code, save_file
+from utils import valdate_code, save_file, send_ding_errmsg
 
 
 class DatabasesView(Api):
@@ -146,7 +146,7 @@ class ExportSQLView(Api):
             cursor.close()
         except Exception as e:
             try:
-                send_ding_errmsg(errmsg=str(e), task_id=task_id, params=self.data["sql_cmd"])
+                send_ding_errmsg(errmsg=str(e), params=self.data["sql_cmd"])
             except:
                 pass
             return self.ret(template="db_err.html", data={"errmsg": str(e)})
@@ -387,7 +387,7 @@ class DataBaseInitView(Api):
         for i in tables:
             i = i[0]
             if "-" in query_obj.name:
-                query_obj_name = query_obj.name.replace("-","_")
+                query_obj_name = query_obj.name.replace("-", "_")
                 new_table_name = f"{query_obj_name}_{i}"
             else:
                 new_table_name = f"{query_obj.name}_{i}"
