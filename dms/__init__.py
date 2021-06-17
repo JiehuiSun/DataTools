@@ -8,22 +8,59 @@
 import time
 import json
 import pymysql
+import asyncio
+import aiomysql
 import datetime
 import collections
 from openpyxl import Workbook
 from flask import current_app
 
-from base import apscheduler
+from base import apscheduler, db
 
-from dms.models import TasksModel
+from dms.models import TasksModel, TasksLogModel
 
 from utils import valdate_code, save_file, send_mail, Phone, last_month, last_week, send_ding_errmsg
+
+
+async def async_mysql(
+        host, port, user, password, db, sql=""
+):
+    try:
+        pool = await aiomysql.create_pool(
+            minsize=5,
+            maxsize=50,
+            host=host,
+            port=port,
+            user=user,
+            password=password,
+            db=db,
+            autocommit=False)
+    except Exception as a:
+        return False, f'连接池创建失败-->{a}'
+
+    try:
+        conn = await pool.acquire()
+        cur = await conn.cursor()
+        await cur.execute(sql)
+        field_list = [i[0] for i in cur.description]
+        data_list = await cur.fetchall()
+    except Exception as a:
+        return False, f'查询数据失败-->{a}'
+
+    cur.close()
+    pool.release(conn)
+
+    return True, {
+        'field_list': field_list,
+        'data_list': data_list,
+    }
 
 
 class DMS(object):
     """
     DMS
     """
+
     @classmethod
     def default_value(cls):
         dt_now = datetime.datetime.now()
@@ -93,34 +130,16 @@ def handle_one_sql(sql_list):
 
     sql_obj = sql_list[0]
     db_obj = sql_obj.database
-    client = pymysql.connect(
-        user=db_obj.username,
-        password=db_obj.password,
+
+    # 返回异步任务
+    return asyncio.run(async_mysql(
         host=db_obj.host,
         port=db_obj.port,
-        database=db_obj.name
-    )
-
-    try:
-        cursor = client.cursor()
-        cursor.execute(DMS.handle_sql(sql_obj.content))
-    except Exception as e:
-        errmsg = "sql{0}的SQL执行错误: {1}".format(db_obj.id, e)
-        cursor.close()
-        client.close()
-        return False, errmsg
-
-    field_list = [i[0] for i in cursor.description]
-    data_list = cursor.fetchall()
-
-    ret = {
-        "field_list": field_list,
-        "data_list": data_list
-    }
-    cursor.close()
-    client.close()
-
-    return True, ret
+        db=db_obj.name,
+        password=db_obj.password,
+        user=db_obj.username,
+        sql=DMS.handle_sql(sql_obj.content)
+    ))
 
 
 def handle_o2o_sql(sql_list):
@@ -304,16 +323,43 @@ def handle_o2m_sql(sql_list):
     return True, ret
 
 
+def write_task_log(ex_type, task_obj, status, return_info=None, dt_handled=None, recipient=None):
+    """
+    更新任务日志(可写异步)
+    """
+    data_params = {
+        "task_no": task_obj.task_no,
+        "task": task_obj,
+        "ex_type": ex_type,
+        "is_successful": status,
+    }
+    if return_info:
+        data_params["return_info"] = return_info
+    if dt_handled:
+        data_params["dt_handled"] = dt_handled
+    if recipient:
+        data_params["recipient"] = recipient
+    db.session.add(TasksLogModel(**data_params))
+    db.session.commit()
+
+
 def execute_task(task_id, is_show=False, is_export=False):
     """
     执行任务
     parasm: task_id: TasksModel.task_no
     """
+    dt_now = datetime.datetime.now()
+    if is_show:
+        ex_type = 1
+    elif is_export:
+        ex_type = 2
+    else:
+        ex_type = 3
     from application import app
     with app.app_context():
         current_app.logger.info(f"TaskID: {task_id}正在执行..")
         task_obj = TasksModel.query.filter_by(task_no=task_id,
-                                            is_deleted=False).first()
+                                              is_deleted=False).first()
         if not task_obj:
             errmsg = "TaskID: {0} 执行失败, ID错误或已被删除".format(task_id)
             try:
@@ -347,6 +393,8 @@ def execute_task(task_id, is_show=False, is_export=False):
             except:
                 pass
             current_app.logger.error(data)
+            # 日志
+            write_task_log(ex_type, task_obj, False, str(data), dt_now)
             if is_show:
                 return {"template": "db_err.html", "data": {"errmsg": str(data)}}
             return
@@ -377,24 +425,39 @@ def execute_task(task_id, is_show=False, is_export=False):
         current_app.logger.info(f"TaskID: {task_id}执行完成..")
 
         if is_show:
+            write_task_log(ex_type, task_obj, True, "查询成功", dt_now)
             return {"template": "sql_ret.html", "data": data}
         elif is_export:
-            file_name = "{0}-{1}.xlsx".format(str(int(time.time())), valdate_code())
-            file_name = save_file(1, data, file_name)
+            ret_msg = "执行成功"
+            status = True
+            try:
+                file_name = "{0}-{1}.xlsx".format(str(int(time.time())), valdate_code())
+                file_name = save_file(1, data, file_name)
 
-            ret_html = "<a href='{0}'>点击下载</a>".format(file_name)
+                ret_html = "<a href='{0}'>点击下载</a>".format(file_name)
+            except Exception as e:
+                ret_msg = str(e)
+                status = False
+            write_task_log(ex_type, task_obj, status, ret_msg, dt_now)
             return ret_html
         else:
+            ret_msg = "发送成功"
+            status = True
             current_app.logger.info("准备发送邮件..")
             # 发送邮件
-            file_name = "{0}-{1}-{2}.xlsx".format(project.name,str(int(time.time())), valdate_code())
-            file_name = save_file(1, data, file_name)
+            try:
+                file_name = "{0}-{1}-{2}.xlsx".format(project.name, str(int(time.time())), valdate_code())
+                file_name = save_file(1, data, file_name)
 
-            send_mail(title=project.name,
-                      content=project.comments,
-                      user_mail_list=project.user_mail_list.split(","),
-                      attachments=[file_name])
-            current_app.logger.info("发送成功..")
+                send_mail(title=project.name,
+                        content=project.comments,
+                        user_mail_list=project.user_mail_list.split(","),
+                        attachments=[file_name])
+                current_app.logger.info("发送成功..")
+            except Exception as e:
+                ret_msg = str(e)
+                status = False
+            write_task_log(ex_type, task_obj, status, ret_msg, dt_now, project.user_mail_list.split(","))
             return True
 
 
@@ -464,6 +527,7 @@ def all_tasks():
             ret[task_obj.task_no] = task_dict
 
         return ret
+
 
 def init_tasks():
     from application import app

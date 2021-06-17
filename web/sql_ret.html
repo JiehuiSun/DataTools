@@ -45,29 +45,33 @@
     td a {
       text-decoration: none;
     }
+
+    table tr:nth-child(even){
+        background: #eeeeee;
+      }
   </style>
   <title>数据库结果集</title>
 </head>
 
 <body>
   <table id="table" align="center">
-  <caption id="caption" class="div_conter">数据库结果集</caption>
-  <colgroup id="colgroup">
-  </colgroup>
+    <caption id="caption" class="div_conter">数据库结果集</caption>
+    <colgroup id="colgroup">
+    </colgroup>
 
-  <tr style="height: 33px;">
-  {% for i in field_list %}
-  <td style="height: 27px; white-space: nowrap;">{{ i }}</td>
-  {% endfor %}
-  </tr>
-
-  {% for i in data_list %}
-  <tr style="height: 33px;" class="content-td">
-    {% for j in i %}
-      <td>{{ j }}</td>
+    <tr style="height: 33px;" id="header">
+    {% for i in field_list %}
+    <td style="height: 27px; white-space: nowrap;">{{ i }}</td>
     {% endfor %}
-  </tr>
-  {% endfor %}
+    </tr>
+
+    <!-- {% for i in data_list %}
+    <tr style="height: 33px;" class="content-td">
+      {% for j in i %}
+        <td>{{ j }}</td>
+      {% endfor %}
+    </tr>
+    {% endfor %} -->
   </table>
 
   <div id="paging" align="center">
@@ -76,7 +80,50 @@
     </ul>
   </div>
 
+  <div class="container" style="text-align:center">
+    <div class="myPagination"></div>
+  </div>
+
+  <script src="https://www.jq22.com/jquery/jquery-1.10.2.js"></script>
+  <script src="/web/static/js/Pagination.js"></script>
   <script type="text/javascript">
+    page_size = 10;
+    var data_list = {{ data_list | tojson}}
+    total_num = data_list.length
+    console.log(total_num)
+
+    handle_data(1);
+    function handle_data(page){
+      $(".content-td").remove()
+      start_num = (page - 1) * 10
+      end_num = page * 10
+      if (end_num > total_num) {
+        end_num = total_num
+      };
+      need_data = data_list.slice(start_num,end_num);
+
+      for (var i = 0;i<need_data.length;i++){
+        var $td_t = "";
+        row_data = need_data[i]
+        for (var j = 0;j<row_data.length;j++){
+          var $td_t = $td_t + "<td>" + row_data[j] + "</td>"
+          
+        }
+        $tr_t = '<tr style="height: 33px;" class="content-td" id="data_tr">' + $td_t + '</tr>'
+        $("#table").append($tr_t)
+      }
+			
+			}
+
+    $(".myPagination").Pagination({
+        page:1,
+        count:total_num,
+		    groups: page_size,
+        onPageChange:function (page) {
+          handle_data(page);
+        }
+    });
+
   </script>
 </body>
 

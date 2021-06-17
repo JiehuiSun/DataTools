@@ -17,8 +17,8 @@ from flask import make_response, send_file, current_app
 from base import db, apscheduler
 from api import Api
 from dms import add_task, execute_task
-from dms.models import DatabaseModel, TasksModel
-from utils import valdate_code, save_file
+from dms.models import DatabaseModel, TasksModel, TasksLogModel
+from utils import valdate_code, save_file, send_ding_errmsg
 
 
 class DatabasesView(Api):
@@ -78,7 +78,7 @@ class SQLWindowView(Api):
                 row = await cursor.fetchone()
                 if not row:
                     break
-                data_list.append(row)
+                data_list.append(list(row))
 
         if cursor.description:
             field_list = [i[0] for i in cursor.description]
@@ -146,7 +146,7 @@ class ExportSQLView(Api):
             cursor.close()
         except Exception as e:
             try:
-                send_ding_errmsg(errmsg=str(e), task_id=task_id, params=self.data["sql_cmd"])
+                send_ding_errmsg(errmsg=str(e), params=self.data["sql_cmd"])
             except:
                 pass
             return self.ret(template="db_err.html", data={"errmsg": str(e)})
@@ -269,23 +269,22 @@ class StartTaskView(Api):
         }
         self.ver_params()
 
-        task_obj = TasksModel.query.filter_by(task_no=self.data["id"]).first()
-        if not task_obj:
+        self.task_obj = TasksModel.query.filter_by(task_no=self.data["id"]).first()
+        if not self.task_obj:
             return self.ret(template="db_err.html", data={"errmsg": "任务不存在或已被删除"})
 
-        self.task_no = task_obj.task_no
-        self.task_obj = task_obj
+        self.task_no = self.task_obj.task_no
 
         # TODO 任务设计类型(cron, interval, date) 目前只测试cron
         self.params = {
-            "year": task_obj.year,
-            "month": task_obj.month,
-            "day": task_obj.day,
-            "week": task_obj.week,
-            "day_of_week": task_obj.day_of_week,
-            "hour": task_obj.hour,
-            "minute": task_obj.minute,
-            "second": task_obj.second,
+            "year": self.task_obj.year,
+            "month": self.task_obj.month,
+            "day": self.task_obj.day,
+            "week": self.task_obj.week,
+            "day_of_week": self.task_obj.day_of_week,
+            "hour": self.task_obj.hour,
+            "minute": self.task_obj.minute,
+            "second": self.task_obj.second,
         }
 
         if self.data["status"] == "1":
@@ -387,7 +386,7 @@ class DataBaseInitView(Api):
         for i in tables:
             i = i[0]
             if "-" in query_obj.name:
-                query_obj_name = query_obj.name.replace("-","_")
+                query_obj_name = query_obj.name.replace("-", "_")
                 new_table_name = f"{query_obj_name}_{i}"
             else:
                 new_table_name = f"{query_obj.name}_{i}"
@@ -441,3 +440,78 @@ class DataBaseInitView(Api):
         for item in create_table_all_list:
             res = self.connect_mysql(query_obj2, item)
         return self.ret(template="sql_ret.html", data="ok")
+
+
+class TasksLogView(Api):
+    """
+    任务日志
+    """
+    NEED_LOGIN = False
+
+    def get(self):
+        """
+        列表
+        """
+        self.params_dict = {
+            "task_name": "optional str",
+            "task_no": "optional str",
+            "recipient": "optional str",
+            "status": "optional str",
+            "handle_type": "optional str",
+            "page_num": "optional str",
+            "page_size": "optional str",
+        }
+        self.ver_params()
+
+        try:
+            page_size = int(self.data.get("page_size", 10))
+            page_num = int(self.data.get("page_num", 1))
+        except Exception as e:
+            ret = {
+                "errmsg": "参数错误"
+            }
+            return self.ret(template="404.html", data=ret)
+
+        db_list = TasksLogModel.query.filter_by(is_deleted=False) \
+            .join(TasksModel, TasksModel.id==TasksLogModel.task_no)
+        if self.data.get("status"):
+            if self.data["status"] == "1":
+                is_successful = True
+            else:
+                is_successful = False
+            db_list = db_list.filter(TasksLogModel.is_successful==is_successful)
+        if self.data.get("handle_type"):
+            db_list = db_list.filter(TasksLogModel.ex_type==self.data["handle_type"])
+
+        if self.data.get("task_name"):
+            db_list = db_list.filter(TasksModel.name.contains(self.data['task_name']))
+        if self.data.get("task_no"):
+            db_list = db_list.filter(TasksModel.task_no.contains(self.data['task_no']))
+        if self.data.get("recipient"):
+            db_list = db_list.filter(TasksLogModel.recipient.contains(self.data["recipient"]))
+
+        total_size = db_list.count()
+        db_list = db_list.order_by(TasksLogModel.dt_create.desc()) \
+                        .limit(page_size).offset((page_num-1) * page_size).all()
+
+        data_list = list()
+        for i in db_list:
+            data_dict = {
+                "task_no": i.task.task_no,
+                "task_name": i.task.name,
+                "dt_handled": i.dt_handled,
+                "is_successful": i.is_successful,
+                "return_info": i.return_info,
+                "recipient": i.recipient,
+                "ex_type": i.ex_type
+            }
+
+            data_list.append(data_dict)
+
+        ret = {
+            "data_list": data_list,
+            "total_size": total_size,
+            "page_num": page_num,
+            "page_size": page_size,
+        }
+        return self.ret(template="tasks_log.html", data=ret)

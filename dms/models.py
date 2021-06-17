@@ -96,7 +96,7 @@ class SQLModel(db.Model):
     __tablename__ = "sql_model"
 
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(128), nullable=True, comment="SQL名")
+    name = db.Column(db.String(128), nullable=False, comment="SQL名")
     project_id = db.Column(db.ForeignKey("requirement_model.id"))
     project = db.relationship('RequirementModel', backref=db.backref('sql_model', lazy='dynamic'))
     database_id = db.Column(db.ForeignKey("database_model.id"))
@@ -126,7 +126,7 @@ class TasksModel(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     task_no = db.Column(db.String(128), nullable=False, default=gen_task_no, comment="备注")
     task_type = db.Column(db.Enum('cron', 'interval', 'date'), server_default='cron', nullable=False)
-    name = db.Column(db.String(128), nullable=True, comment="任务名")
+    name = db.Column(db.String(128), nullable=False, comment="任务名")
     project_id = db.Column(db.ForeignKey("requirement_model.id"))
     project = db.relationship('RequirementModel', backref=db.backref('tasks_model', lazy='dynamic'))
     comments = db.Column(db.String(256), nullable=True, comment="备注")
@@ -148,3 +148,28 @@ class TasksModel(db.Model):
 
     def __str__(self):
         return self.name
+
+
+class TasksLogModel(db.Model):
+    """
+    任务日志
+    """
+    __tablename__ = "tasks_log_model"
+
+    id = db.Column(db.Integer, primary_key=True)
+    ex_type = db.Column(db.Integer, comment="执行类型")
+    task_no = db.Column(db.ForeignKey("tasks_model.id"))
+    task = db.relationship('TasksModel', backref=db.backref('tasks_log_model', lazy='dynamic'))
+    return_info = db.Column(db.Text, nullable=True, comment="返回信息")
+    dt_handled = db.Column(db.DateTime, default=time_utils.now_dt, comment="处理时间")
+    is_successful = db.Column(db.Boolean, default=True, comment="是否成功")
+    recipient = db.Column(db.Text, nullable=True, comment="收信人")
+    is_deleted = db.Column(db.Boolean, default=False)
+    dt_create = db.Column(db.DateTime, default=time_utils.now_dt)
+    dt_update = db.Column(db.DateTime, default=time_utils.now_dt)
+
+    def __repr__(self):
+        return str(self.task_no)
+
+    def __str__(self):
+        return str(self.task_no)
