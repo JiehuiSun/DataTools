@@ -68,7 +68,8 @@ class SQLWindowView(Api):
             password=query_obj.password,
             db=query_obj.name,
             charset='utf8',
-            loop=loop)
+            loop=loop,
+            read_default_file="/etc/my.cnf")
 
         async with aiomysql.cursors.SSCursor(client) as cursor:
             await cursor.execute(sql_cmd)
@@ -138,7 +139,8 @@ class ExportSQLView(Api):
             password=query_obj.password,
             host=query_obj.host,
             port=query_obj.port,
-            database=query_obj.name
+            database=query_obj.name,
+            read_default_file="/etc/my.cnf"
         )
         try:
             cursor = client.cursor()
@@ -269,30 +271,30 @@ class StartTaskView(Api):
         }
         self.ver_params()
 
-        self.task_obj = TasksModel.query.filter_by(task_no=self.data["id"]).first()
-        if not self.task_obj:
+        task_obj = TasksModel.query.filter_by(task_no=self.data["id"]).first()
+        if not task_obj:
             return self.ret(template="db_err.html", data={"errmsg": "任务不存在或已被删除"})
 
-        self.task_no = self.task_obj.task_no
+        self.task_no = task_obj.task_no
 
         # TODO 任务设计类型(cron, interval, date) 目前只测试cron
         self.params = {
-            "year": self.task_obj.year,
-            "month": self.task_obj.month,
-            "day": self.task_obj.day,
-            "week": self.task_obj.week,
-            "day_of_week": self.task_obj.day_of_week,
-            "hour": self.task_obj.hour,
-            "minute": self.task_obj.minute,
-            "second": self.task_obj.second,
+            "year": task_obj.year,
+            "month": task_obj.month,
+            "day": task_obj.day,
+            "week": task_obj.week,
+            "day_of_week": task_obj.day_of_week,
+            "hour": task_obj.hour,
+            "minute": task_obj.minute,
+            "second": task_obj.second,
         }
 
         if self.data["status"] == "1":
-            return self.start_task()
+            return self.start_task(task_obj)
         else:
-            return self.stop_task()
+            return self.stop_task(task_obj)
 
-    def start_task(self):
+    def start_task(self, task_obj):
         """
         启动
         """
@@ -303,7 +305,7 @@ class StartTaskView(Api):
                 task_params[k] = v
 
         # 注册到任务APS
-        ret = add_task(self.task_no, trigger=self.task_obj.task_type, **task_params)
+        ret = add_task(self.task_no, trigger=task_obj.task_type, **task_params)
         jobs_list = apscheduler.get_jobs()
         for i in jobs_list:
             current_app.logger.info(f"启动后的任务有: {i}")
@@ -312,12 +314,12 @@ class StartTaskView(Api):
             return self.ret(template="db_err.html", data={"errmsg": "任务不存在或已被删除/关闭"})
         else:
             current_app.logger.info(f"任务-{self.task_no}启动成功")
-            self.task_obj.status = True
+            task_obj.status = True
             db.session.commit()
             return self.ret(template="200.html", data={"errmsg": "任务开启成功", "next_url": "base./dms/v1/tasks/"})
         return
 
-    def stop_task(self):
+    def stop_task(self, task_obj):
         """
         关闭
         """
@@ -330,7 +332,7 @@ class StartTaskView(Api):
         jobs_list = apscheduler.get_jobs()
         for i in jobs_list:
             current_app.logger.info(f"关闭后的任务有: {i}")
-        self.task_obj.status = False
+        task_obj.status = False
         current_app.logger.info(f"任务-{self.task_no}关闭成功")
         db.session.commit()
         return self.ret(template="200.html", data={"errmsg": "任务关闭成功", "next_url": "base./dms/v1/tasks/"})
@@ -351,7 +353,8 @@ class DataBaseInitView(Api):
             password=query_obj.password,
             host=query_obj.host,
             port=query_obj.port,
-            database=query_obj.name
+            database=query_obj.name,
+            read_default_file="/etc/my.cnf"
         )
         try:
             cursor = client.cursor()
@@ -413,7 +416,8 @@ class DataBaseInitView(Api):
 
             # 修改字符
             create_table_sql = create_table_sql.replace("general_ci", "0900_ai_ci")
-            create_table_sql = create_table_sql.replace("utf8", "utf8mb4")
+            if "utf8mb4" not in create_table_sql:
+                create_table_sql = create_table_sql.replace("utf8", "utf8mb4")
 
             # 处理创建语句
             creat_table_collocation = f"ENGINE=FEDERATED DEFAULT CHARSET={charset} COMMENT='{comment}' \

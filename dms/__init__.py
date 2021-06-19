@@ -132,14 +132,18 @@ def handle_one_sql(sql_list):
     db_obj = sql_obj.database
 
     # 返回异步任务
-    return asyncio.run(async_mysql(
-        host=db_obj.host,
-        port=db_obj.port,
-        db=db_obj.name,
-        password=db_obj.password,
-        user=db_obj.username,
-        sql=DMS.handle_sql(sql_obj.content)
-    ))
+    try:
+        res = asyncio.run(async_mysql(
+            host=db_obj.host,
+            port=db_obj.port,
+            db=db_obj.name,
+            password=db_obj.password,
+            user=db_obj.username,
+            sql=DMS.handle_sql(sql_obj.content)
+        ))
+        return res
+    except Exception as e:
+        return False, f"sql{db_obj.id}的SQL执行错误: {str(e)}"
 
 
 def handle_o2o_sql(sql_list):
@@ -159,7 +163,8 @@ def handle_o2o_sql(sql_list):
             password=db_obj.password,
             host=db_obj.host,
             port=db_obj.port,
-            database=db_obj.name
+            database=db_obj.name,
+            read_default_file="/etc/my.cnf"
         )
 
         try:
@@ -240,7 +245,8 @@ def handle_o2m_sql(sql_list):
             password=db_obj.password,
             host=db_obj.host,
             port=db_obj.port,
-            database=db_obj.name
+            database=db_obj.name,
+            read_default_file="/etc/my.cnf"
         )
 
         try:
