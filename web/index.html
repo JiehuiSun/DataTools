@@ -4,17 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <link rel="icon" type="image/png" sizes="144x144" href="https://static.mumway.com/saas/payShare/logo_hymm.png"/>
+  <link href="/web/static/css/bootstrap.min.css" rel="stylesheet">
     <title>数据管理工具首页</title>
 </head>
 <body>
-    <h1>数据管理工具首页</h1>
-    <div>
-      <div>
-        <a href="{{ url_for('base./dms/v1/databases/') }}">数据库</a>
-      </div>
-      <div>
-        <a href="{{ url_for('base./dms/v1/tasks/') }}">任务</a>
-      </div>
+
+    <div class="" role="group" align="center">
+      <h1>数据管理工具首页</h1>
+      <hr>
+      <a href="{{ url_for('base./dms/v1/databases/') }}"><button type="button" class="btn btn-primary">数据库</button></a>
+      <a href="{{ url_for('base./dms/v1/tasks/') }}"><button type="button" class="btn btn-primary">任务</button></a>
+      <a href="{{ url_for('base./dms/v1/task_log/') }}"><button type="button" class="btn btn-primary">日志</button></a>
     </div>
 </body>
 </html>
