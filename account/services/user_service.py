@@ -6,6 +6,7 @@
 
 
 import time
+from flask_login import login_user, current_user, logout_user, login_required
 
 from account.backends.user_backend import UserBKE
 from account.helpers import (algorithm_auth_login, make_random_str)
@@ -37,6 +38,9 @@ class APIUser:
         if not user_or_msg.active:
             return False, "您的账号已被禁用"
 
+        # 登录
+        login_user(user_or_msg)
+
         auth_code_params = {
             "user_id": user_or_msg.id,
             "random_str": make_random_str(),
@@ -52,3 +56,9 @@ class APIUser:
         }
 
         return True, ret
+
+    @classmethod
+    # @login_required
+    def logout(self):
+        logout_user()
+        return True, dict()

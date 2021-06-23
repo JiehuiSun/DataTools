@@ -6,8 +6,9 @@
 from flask import request
 from flask import jsonify
 from flask import current_app
-from flask import render_template
+from flask import render_template, redirect
 from flask.views import View
+from flask_login import current_user
 
 from base import errors
 from base import session
@@ -21,6 +22,7 @@ class Api(VerParams, Resp, View):
 
     def __init__(self):
         self.__name__ = self.__class__.__name__
+        self.next_url = "index"
 
     def _get_token(self):
         token = request.headers.get('HTTP-X-TOKEN')
@@ -35,14 +37,25 @@ class Api(VerParams, Resp, View):
             if not self.user_id:
                 raise errors.LoginExpiredError
 
+    def _identification(self):
+        if self.NEED_LOGIN:
+            if not current_user.is_authenticated:
+                return redirect(f"/account/v1/login/?next_url={self.headers['Path']}")
+
     def _handle_params(self):
         """
         参数校验
         """
-        if request.method.lower() == 'get':
-            self.data = dict(request.args)
-        else:
+        if request.method.lower() != 'get':
             self.data = request.json
+        else:
+            self.data = dict(request.args)
+        params = dict(request.args)
+        if params.get("next_url"):
+            self.next_url = params.pop("next_url")
+        if self.data.get("next_url"):
+            self.data.pop("next_url")
+
 
     def ver_params(self):
         """
@@ -56,7 +69,7 @@ class Api(VerParams, Resp, View):
         """
             调用具体业务方法之前，如果需要一些权限认证或者其它操作在这里实现
         """
-        self._identification()
+        return self._identification()
 
     def _after_handle(self):
         """
@@ -74,7 +87,9 @@ class Api(VerParams, Resp, View):
             method = getattr(self, request.method.lower(), None)
             if not method:
                 raise errors.MethodError
-            self._pre_handle()
+            _pre_h = self._pre_handle()
+            if _pre_h:
+                return _pre_h
             result = method()
             self._after_handle()
         except errors.BaseError as e:
@@ -100,6 +115,7 @@ class Api(VerParams, Resp, View):
             return jsonify(result)
         elif current_app.config["RESP_TYPE"] == "templates":
             if result.get("template"):
+                result["data"]["current_user"] = current_user
                 return render_template(result["template"], **result["data"])
             elif isinstance(result, dict):
                 return jsonify(result)

@@ -25,7 +25,7 @@ class DatabasesView(Api):
     """
     数据库
     """
-    NEED_LOGIN = False
+    NEED_LOGIN = True
 
     def get(self):
         """
@@ -55,7 +55,7 @@ class SQLWindowView(Api):
     """
     sql窗口
     """
-    NEED_LOGIN = False
+    NEED_LOGIN = True
 
     async def connect_mysql(self, query_obj, sql_cmd, loop):
         '''
@@ -119,7 +119,7 @@ class ExportSQLView(Api):
     """
     导出
     """
-    NEED_LOGIN = False
+    NEED_LOGIN = True
 
     def post(self):
         self.params_dict = {
@@ -183,7 +183,7 @@ class TasksView(Api):
     """
     任务
     """
-    NEED_LOGIN = False
+    NEED_LOGIN = True
 
     def get(self):
         """
@@ -256,7 +256,7 @@ class StartTaskView(Api):
     """
     启动关闭任务
     """
-    NEED_LOGIN = False
+    NEED_LOGIN = True
 
     def get(self):
         """
@@ -342,7 +342,7 @@ class DataBaseInitView(Api):
     """
     sql初始化
     """
-    NEED_LOGIN = False
+    NEED_LOGIN = True
 
     def connect_mysql(self, query_obj, sql_cmd):
         '''
@@ -455,7 +455,7 @@ class TasksLogView(Api):
     """
     任务日志
     """
-    NEED_LOGIN = False
+    NEED_LOGIN = True
 
     def get(self):
         """

@@ -14,6 +14,7 @@ class VerParams:
     参数校验
     """
     def _ver_params(self, params_dict, data):
+        params_dict["next_url"] = "optional"
         data_keys = set(data.keys())
         max_keys = set(params_dict.keys())
         # mini keys 判断

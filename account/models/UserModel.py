@@ -20,6 +20,19 @@ class UserModel(db.Model):
     dt_create = db.Column(db.DateTime, default=time_utils.now_dt)
     dt_update = db.Column(db.DateTime, default=time_utils.now_dt)
 
+    def get_id(self):
+        return self.id
+
+    def is_active(self):
+        return self.active
+
+    def is_authenticated(self):
+        return self.authenticated
+
+    @property
+    def is_anonymous(self):
+        return False
+
     @classmethod
     def register(cls, username, password,
                  is_active=True, ):

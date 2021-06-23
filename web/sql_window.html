@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
+{% extends "base.html" %}
 <head>
+      {% block style %}
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
@@ -36,8 +38,10 @@
 
     .CodeMirror {border: 1px solid black;}
     </style>
+      {% endblock %}
 </head>
 <body>
+    {% block content %}
     <h1>SQL窗口</h1>
     <div class="div_conter">
       <textarea id=sql_cmd name="code"></textarea>
@@ -94,5 +98,5 @@
       }});
   }
 </script>
-
+      {% endblock %}
 </html>
