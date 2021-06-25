@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
-
+{% extends "base.html" %}
 <head>
+  {% block style %}
   <meta charset="UTF-8">
   <link rel="icon" type="image/png" sizes="144x144" href="https://static.mumway.com/saas/payShare/logo_hymm.png"/>
   <style>
@@ -30,9 +31,11 @@
     }
   </style>
   <title>任务详情</title>
+  {% endblock %}
 </head>
 
 <body>
+  {% block content %}
   <table id="task" align="center">
   <caption id="caption">任务详情</caption>
   <colgroup id="colgroup">
@@ -114,6 +117,7 @@
 
   <script type="text/javascript">
   </script>
+  {% endblock %}
 </body>
 
 </html>

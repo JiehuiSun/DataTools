@@ -3,7 +3,7 @@ import atexit
 import fcntl
 import logging
 from flask import Flask, render_template
-from flask_admin import Admin
+from flask_admin import Admin, AdminIndexView
 from flask_babelex import Babel
 from werkzeug.routing import BaseConverter
 
@@ -30,7 +30,11 @@ class RegexConverter(BaseConverter):
 
 def create_app():
     app = Flask(APP_NAME)
-    admin = Admin(app, name="后台管理系统")
+    admin = Admin(app, name="后台管理系统", index_view=AdminIndexView(
+        name='导航栏',
+        template='admin_index.html',
+        url='/admin'
+    ))
     model_admin(admin, db)
     babel = Babel(app)
     app.config.from_object(configs.DefaultConfig)
@@ -80,6 +84,10 @@ def config_login(app):
 
     from account.models.UserModel import UserModel
 
+    @configs.lm.user_loader
+    def load_user(userid):
+        return UserModel.query.filter_by(id=userid).one_or_none()
+
     @configs.lm.request_loader
     def load_user_from_request(req):
         auth_token = req.headers.get('token')
@@ -105,20 +113,27 @@ def config_mail(app):
 
 
 def config_apscheduler(app):
-    # apscheduler.init_app(app)
-    # apscheduler.start()
-
+    try:
+        apscheduler.shutdown()
+    except:
+        pass
+    apscheduler.init_app(app)
+    apscheduler.start()
+    """
     f = open("scheduler.lock", "wb")
     try:
-        fcntl.flock(f, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        fcntl.flock(f, fcntl.LOCK_SH)
         apscheduler.init_app(app)
         apscheduler.start()
-    except:
+    except Exception as e:
+        print(f"Task Err : {e}")
         pass
     def unlock():
         fcntl.flock(f, fcntl.LOCK_UN)
         f.close()
     atexit.register(unlock)
+    """
+
 
 
 app = create_app()

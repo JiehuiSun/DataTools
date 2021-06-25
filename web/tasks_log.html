@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
-
+{% extends "base.html" %}
 <head>
+  {% block style %}
   <meta charset="UTF-8">
   <link rel="icon" type="image/png" sizes="144x144" href="https://static.mumway.com/saas/payShare/logo_hymm.png"/>
   <link href="/web/static/css/bootstrap.min.css" rel="stylesheet">
@@ -103,11 +104,12 @@
 
   </style>
   <title>任务日志</title>
+  {% endblock %}
 </head>
 
 <body>
 
-  
+ {% block content %}
   <div align="center">
     <h2>任务日志</h2>
     <br/>
@@ -292,7 +294,7 @@
   </script>
   <script src="/web/static/js/jquery.min.js" integrity="sha384-nvAa0+6Qg9clwYCGGPpDQLVpLNn0fRaROjHqs13t4Ggj3Ez50XnGQqc/r8MhnRDZ" crossorigin="anonymous"></script>
   <script src="/web/static/js/bootstrap.min.js"></script>
-  
+   {% endblock %}
 </body>
 
 </html>

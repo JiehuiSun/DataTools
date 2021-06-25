@@ -77,6 +77,9 @@ class Resp(_EvenException):
             "data": data,
             "template": template
         }
+        if template:
+            from flask_login import current_user
+            ret["data"]["current_user"] = current_user
 
         if ret["errcode"] == 0:
             return ret

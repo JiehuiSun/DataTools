@@ -29,7 +29,7 @@ class UserBKE:
             current_app.logger.error("查询用户失败: {e}")
             return False, "查询用户失败"
         if user_count:
-            return True, True
+            return False, True
         else:
             return True, False
 
