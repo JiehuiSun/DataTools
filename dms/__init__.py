@@ -488,7 +488,7 @@ def execute_task(task_id, is_show=False, is_export=False):
                 ret_msg = str(e)
                 status = False
             write_task_log(ex_type, task_obj, status, ret_msg, dt_now,
-                           project.user_mail_list.split(","), log_obj=task_log_obj)
+                           project.user_mail_list, log_obj=task_log_obj)
             return True
 
 
