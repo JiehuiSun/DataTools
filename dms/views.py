@@ -524,6 +524,7 @@ class TasksLogView(Api):
             "total_size": total_size,
             "page_num": page_num,
             "page_size": page_size,
+            "params": self.data
         }
         return self.ret(template="tasks_log.html", data=ret)
 

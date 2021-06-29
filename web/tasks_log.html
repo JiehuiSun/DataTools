@@ -235,6 +235,23 @@
   <script src="/web/static/js/jquery.min.js"></script>
   <script src="/web/static/js/Pagination.js"></script>
   <script type="text/javascript">
+    // 参数
+    if ("{{ params.task_name }}") {
+      document.getElementById('s_task_name').value = "{{ params.task_name }}"
+    };
+    if ("{{ params.task_no }}") {
+      document.getElementById('s_task_id').value = "{{ params.task_no }}"
+    };
+    if ("{{ params.recipient }}") {
+      document.getElementById('s_recipient').value = "{{ params.recipient }}"
+    };
+    if ("{{ params.status }}") {
+      document.getElementById('s_recipient').value = "{{ params.status }}"
+    };
+    if ("{{ params.handle_type }}") {
+      document.getElementById('s_handle_type').value = "{{ params.handle_type }}"
+    };
+
     document.getElementById('zhezhao').style.display="none";
     u = window.location.href
     if (u.includes("page_num")){
