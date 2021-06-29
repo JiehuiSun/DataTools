@@ -504,22 +504,22 @@ def add_task(task_id, **kwargs):
     添加任务
     """
     from application import app
-    with app.app_context():
-        current_app.logger.info(f"增加任务, {task_id}")
+    # with app.app_context():
+    current_app.logger.info(f"增加任务, {task_id}")
+    try:
+        apscheduler.add_job(task_id, func=execute_task, args=(task_id,), **kwargs, max_instances=20)
+    except Exception as e:
         try:
-            apscheduler.add_job(task_id, func=execute_task, args=(task_id,), **kwargs, max_instances=20)
-        except Exception as e:
-            try:
-                send_ding_errmsg(errmsg=str(e), task_id=task_id, params=kwargs)
-            except:
-                pass
-            current_app.logger.error(f"注册任务失败: {e}")
-            return
-        current_app.logger.info("任务增加成功")
-        jobs_list = apscheduler.get_jobs()
-        for i in jobs_list:
-            current_app.logger.info(f"增加后的任务有: {i}")
-        return True
+            send_ding_errmsg(errmsg=str(e), task_id=task_id, params=kwargs)
+        except:
+            pass
+        current_app.logger.error(f"注册任务失败: {e}")
+        return
+    current_app.logger.info("任务增加成功")
+    jobs_list = apscheduler.get_jobs()
+    for i in jobs_list:
+        current_app.logger.info(f"增加后的任务有: {i}")
+    return True
 
 
 def del_task(task_id, **kwargs):
