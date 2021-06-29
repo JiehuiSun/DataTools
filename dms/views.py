@@ -557,8 +557,8 @@ class SendFileView(Api):
         mail_content = f"需求备注: {project.comments or '无'}\n下载地址: {down_url}"
 
         send_mail(title=project.name,
-                    content=mail_content,
-                    user_mail_list=task_log_obj.recipient.split(","))
+                  content=mail_content,
+                  user_mail_list=project.user_mail_list.split(","))
         ret = {
             "errmsg": "发送成功",
             "next_url": "base./dms/v1/task_log/"
