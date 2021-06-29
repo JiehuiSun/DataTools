@@ -42,4 +42,4 @@ for path, view in routing_dict.items():
                           endpoint=endpoint)
 
 # 下载接口(使用第三方文件存储时可不用)
-instance.add_url_rule("/dms/v1/sql_window/<re('.*'):key>", view_func=ExportSQLView.as_view("down_file"), methods=["GET"], endpoint="down_file")
+instance.add_url_rule("/dms/v1/down_file/<re('.*'):key>", view_func=ExportSQLView.as_view("down_file"), methods=["GET"], endpoint="down_file")

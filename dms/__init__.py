@@ -15,7 +15,7 @@ import collections
 from openpyxl import Workbook
 from flask import current_app
 
-from base import apscheduler, db
+from base import apscheduler, db, redis
 
 from dms.models import TasksModel, TasksLogModel
 
@@ -440,7 +440,7 @@ def execute_task(task_id, is_show=False, is_export=False):
                 file_name = "{0}-{1}.xlsx".format(str(int(time.time())), valdate_code())
                 file_name = save_file(1, data, file_name)
 
-                ret_html = "<a href='{0}'>点击下载</a>".format(file_name)
+                ret_html = "<a href='/dms/v1/down_file/{0}'>点击下载</a>".format(file_name)
             except Exception as e:
                 ret_msg = str(e)
                 status = False
@@ -452,13 +452,20 @@ def execute_task(task_id, is_show=False, is_export=False):
             current_app.logger.info("准备发送邮件..")
             # 发送邮件
             try:
-                file_name = "{0}-{1}-{2}.xlsx".format(project.name, str(int(time.time())), valdate_code())
+                file_name = "{0}-{1}-{2}.xlsx".format(project.name,
+                                                      str(datetime.datetime.now()).split()[0],
+                                                      valdate_code())
                 file_name = save_file(1, data, file_name)
 
+                down_url = "http://{0}/dms/v1/down_file/{1}".format(
+                    current_app.config['MAIL_DOWN_HOST'] or redis.client['ServerHost'].decode(),
+                    file_name
+                )
+                mail_content = f"需求备注: {project.comments or '无'}\n下载地址: {down_url}"
+
                 send_mail(title=project.name,
-                        content=project.comments,
-                        user_mail_list=project.user_mail_list.split(","),
-                        attachments=[file_name])
+                          content=mail_content,
+                          user_mail_list=project.user_mail_list.split(","))
                 current_app.logger.info("发送成功..")
             except Exception as e:
                 ret_msg = str(e)

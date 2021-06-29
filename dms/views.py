@@ -169,7 +169,7 @@ class ExportSQLView(Api):
         # resp.headers["Content-Disposition"] = 'attachment; filename=aaa.xlsx'
         # resp.headers['Content-Type'] = 'application/x-xlsx'
 
-        ret_html = "<a href='{0}'>点击下载</a>".format(file_name)
+        ret_html = "<a href='/dms/v1/down_file/{0}'>点击下载</a>".format(file_name)
         return ret_html
 
     def get(self):
