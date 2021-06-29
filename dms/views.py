@@ -14,11 +14,11 @@ from openpyxl import Workbook
 from openpyxl.writer.excel import save_virtual_workbook
 from flask import make_response, send_file, current_app
 
-from base import db, apscheduler
+from base import db, apscheduler, redis
 from api import Api
 from dms import add_task, execute_task
 from dms.models import DatabaseModel, TasksModel, TasksLogModel
-from utils import valdate_code, save_file, send_ding_errmsg
+from utils import valdate_code, save_file, send_ding_errmsg, send_mail
 
 
 class DatabasesView(Api):
@@ -119,7 +119,7 @@ class ExportSQLView(Api):
     """
     导出
     """
-    NEED_LOGIN = True
+    NEED_LOGIN = False
 
     def post(self):
         self.params_dict = {
@@ -506,13 +506,15 @@ class TasksLogView(Api):
         data_list = list()
         for i in db_list:
             data_dict = {
+                "id": i.id,
                 "task_no": i.task.task_no,
                 "task_name": i.task.name,
                 "dt_handled": i.dt_handled,
                 "is_successful": i.is_successful,
                 "return_info": i.return_info,
                 "recipient": i.recipient,
-                "ex_type": i.ex_type
+                "ex_type": i.ex_type,
+                "file_name": i.file_name,
             }
 
             data_list.append(data_dict)
@@ -524,3 +526,41 @@ class TasksLogView(Api):
             "page_size": page_size,
         }
         return self.ret(template="tasks_log.html", data=ret)
+
+
+class SendFileView(Api):
+    """
+    发送文件(应该做全局视图)
+    """
+    NEED_LOGIN = True
+
+    def get(self):
+        """
+        """
+        self.params_dict = {
+            "log_id": "required str",
+        }
+        self.ver_params()
+
+        task_log_obj = TasksLogModel.query.filter_by(id=self.data["log_id"]).one_or_none()
+        if not task_log_obj:
+            ret = {
+                "errmsg": "参数错误"
+            }
+            return self.ret(template="404.html", data=ret)
+
+        down_url = "http://{0}/dms/v1/down_file/{1}".format(
+            current_app.config['MAIL_DOWN_HOST'] or redis.client['ServerHost'].decode(),
+            task_log_obj.file_name
+        )
+        project = task_log_obj.task.project
+        mail_content = f"需求备注: {project.comments or '无'}\n下载地址: {down_url}"
+
+        send_mail(title=project.name,
+                    content=mail_content,
+                    user_mail_list=task_log_obj.recipient.split(","))
+        ret = {
+            "errmsg": "发送成功",
+            "next_url": "base./dms/v1/task_log/"
+        }
+        return self.ret(template="200.html", data=ret)

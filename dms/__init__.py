@@ -329,10 +329,21 @@ def handle_o2m_sql(sql_list):
     return True, ret
 
 
-def write_task_log(ex_type, task_obj, status, return_info=None, dt_handled=None, recipient=None):
+def write_task_log(ex_type, task_obj, status, return_info=None, dt_handled=None,
+                   recipient=None, file_name=None, log_obj=None):
     """
     更新任务日志(可写异步)
     """
+    if log_obj:
+        log_id = log_obj.id
+        task_log_obj = TasksLogModel.query.filter_by(id=log_id).one_or_none()
+        if not task_log_obj:
+            return
+        task_log_obj.recipient = recipient
+        task_log_obj.return_info = return_info
+        db.session.commit()
+        return
+
     data_params = {
         "task_no": task_obj.task_no,
         "task": task_obj,
@@ -345,8 +356,12 @@ def write_task_log(ex_type, task_obj, status, return_info=None, dt_handled=None,
         data_params["dt_handled"] = dt_handled
     if recipient:
         data_params["recipient"] = recipient
-    db.session.add(TasksLogModel(**data_params))
+    if file_name:
+        data_params["file_name"] = file_name
+    task_obj = TasksLogModel(**data_params)
+    db.session.add(task_obj)
     db.session.commit()
+    return task_obj
 
 
 def execute_task(task_id, is_show=False, is_export=False):
@@ -444,18 +459,20 @@ def execute_task(task_id, is_show=False, is_export=False):
             except Exception as e:
                 ret_msg = str(e)
                 status = False
-            write_task_log(ex_type, task_obj, status, ret_msg, dt_now)
+            write_task_log(ex_type, task_obj, status, ret_msg, dt_now, file_name=file_name)
             return ret_html
         else:
             ret_msg = "发送成功"
             status = True
             current_app.logger.info("准备发送邮件..")
             # 发送邮件
+            task_log_obj = None
             try:
                 file_name = "{0}-{1}-{2}.xlsx".format(project.name,
                                                       str(datetime.datetime.now()).split()[0],
                                                       valdate_code())
                 file_name = save_file(1, data, file_name)
+                task_log_obj = write_task_log(ex_type, task_obj, status, "执行成功", dt_now, file_name=file_name)
 
                 down_url = "http://{0}/dms/v1/down_file/{1}".format(
                     current_app.config['MAIL_DOWN_HOST'] or redis.client['ServerHost'].decode(),
@@ -470,7 +487,8 @@ def execute_task(task_id, is_show=False, is_export=False):
             except Exception as e:
                 ret_msg = str(e)
                 status = False
-            write_task_log(ex_type, task_obj, status, ret_msg, dt_now, project.user_mail_list.split(","))
+            write_task_log(ex_type, task_obj, status, ret_msg, dt_now,
+                           project.user_mail_list.split(","), log_obj=task_log_obj)
             return True
 
 
