@@ -10,6 +10,7 @@ from flask import render_template, redirect
 from flask.views import View
 from flask_login import current_user
 
+from base import redis
 from base import errors
 from base import session
 
@@ -175,6 +176,10 @@ class Api(VerParams, Resp, View):
             'open_id': request.headers.get('HTTP_AUTHORIZATION', None),
 
         }
+
+        if not redis.client.get("ServerHost"):
+            redis.client.set("ServerHost", self.headers["Host"])
+
         if 'HTTP_X_AUTH_USERTOKEN' in request.headers:
             self.headers['X-AUTH-USERTOKEN'] = request.headers['HTTP_X_AUTH_USERTOKEN']
         for k, v in request.files.items():

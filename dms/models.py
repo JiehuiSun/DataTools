@@ -164,6 +164,7 @@ class TasksLogModel(db.Model):
     dt_handled = db.Column(db.DateTime, default=time_utils.now_dt, comment="处理时间")
     is_successful = db.Column(db.Boolean, default=True, comment="是否成功")
     recipient = db.Column(db.Text, nullable=True, comment="收信人")
+    file_name = db.Column(db.String(128), nullable=True, comment="文件名")
     is_deleted = db.Column(db.Boolean, default=False)
     dt_create = db.Column(db.DateTime, default=time_utils.now_dt)
     dt_update = db.Column(db.DateTime, default=time_utils.now_dt)
@@ -172,4 +173,4 @@ class TasksLogModel(db.Model):
         return str(self.task_no)
 
     def __str__(self):
-        return str(self.task_no)
+        return str(self.id)

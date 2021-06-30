@@ -15,7 +15,7 @@ import collections
 from openpyxl import Workbook
 from flask import current_app
 
-from base import apscheduler, db
+from base import apscheduler, db, redis
 
 from dms.models import TasksModel, TasksLogModel
 
@@ -329,10 +329,21 @@ def handle_o2m_sql(sql_list):
     return True, ret
 
 
-def write_task_log(ex_type, task_obj, status, return_info=None, dt_handled=None, recipient=None):
+def write_task_log(ex_type, task_obj, status, return_info=None, dt_handled=None,
+                   recipient=None, file_name=None, log_obj=None):
     """
     更新任务日志(可写异步)
     """
+    if log_obj:
+        log_id = log_obj.id
+        task_log_obj = TasksLogModel.query.filter_by(id=log_id).one_or_none()
+        if not task_log_obj:
+            return
+        task_log_obj.recipient = recipient
+        task_log_obj.return_info = return_info
+        db.session.commit()
+        return
+
     data_params = {
         "task_no": task_obj.task_no,
         "task": task_obj,
@@ -345,8 +356,12 @@ def write_task_log(ex_type, task_obj, status, return_info=None, dt_handled=None,
         data_params["dt_handled"] = dt_handled
     if recipient:
         data_params["recipient"] = recipient
-    db.session.add(TasksLogModel(**data_params))
+    if file_name:
+        data_params["file_name"] = file_name
+    task_obj = TasksLogModel(**data_params)
+    db.session.add(task_obj)
     db.session.commit()
+    return task_obj
 
 
 def execute_task(task_id, is_show=False, is_export=False):
@@ -440,30 +455,40 @@ def execute_task(task_id, is_show=False, is_export=False):
                 file_name = "{0}-{1}.xlsx".format(str(int(time.time())), valdate_code())
                 file_name = save_file(1, data, file_name)
 
-                ret_html = "<a href='{0}'>点击下载</a>".format(file_name)
+                ret_html = "<a href='/dms/v1/down_file/{0}'>点击下载</a>".format(file_name)
             except Exception as e:
                 ret_msg = str(e)
                 status = False
-            write_task_log(ex_type, task_obj, status, ret_msg, dt_now)
+            write_task_log(ex_type, task_obj, status, ret_msg, dt_now, file_name=file_name)
             return ret_html
         else:
             ret_msg = "发送成功"
             status = True
             current_app.logger.info("准备发送邮件..")
             # 发送邮件
+            task_log_obj = None
             try:
-                file_name = "{0}-{1}-{2}.xlsx".format(project.name, str(int(time.time())), valdate_code())
+                file_name = "{0}-{1}-{2}.xlsx".format(project.name,
+                                                      str(datetime.datetime.now()).split()[0],
+                                                      valdate_code())
                 file_name = save_file(1, data, file_name)
+                task_log_obj = write_task_log(ex_type, task_obj, status, "执行成功", dt_now, file_name=file_name)
+
+                down_url = "http://{0}/dms/v1/down_file/{1}".format(
+                    current_app.config['MAIL_DOWN_HOST'] or redis.client['ServerHost'].decode(),
+                    file_name
+                )
+                mail_content = f"需求备注: {project.comments or '无'}\n下载地址: {down_url}"
 
                 send_mail(title=project.name,
-                        content=project.comments,
-                        user_mail_list=project.user_mail_list.split(","),
-                        attachments=[file_name])
+                          content=mail_content,
+                          user_mail_list=project.user_mail_list.split(","))
                 current_app.logger.info("发送成功..")
             except Exception as e:
                 ret_msg = str(e)
                 status = False
-            write_task_log(ex_type, task_obj, status, ret_msg, dt_now, project.user_mail_list.split(","))
+            write_task_log(ex_type, task_obj, status, ret_msg, dt_now,
+                           project.user_mail_list.split(","), log_obj=task_log_obj)
             return True
 
 
@@ -479,22 +504,22 @@ def add_task(task_id, **kwargs):
     添加任务
     """
     from application import app
-    with app.app_context():
-        current_app.logger.info(f"增加任务, {task_id}")
+    # with app.app_context():
+    current_app.logger.info(f"增加任务, {task_id}")
+    try:
+        apscheduler.add_job(task_id, func=execute_task, args=(task_id,), **kwargs, max_instances=20)
+    except Exception as e:
         try:
-            apscheduler.add_job(task_id, func=execute_task, args=(task_id,), **kwargs, max_instances=20)
-        except Exception as e:
-            try:
-                send_ding_errmsg(errmsg=str(e), task_id=task_id, params=kwargs)
-            except:
-                pass
-            current_app.logger.error(f"注册任务失败: {e}")
-            return
-        current_app.logger.info("任务增加成功")
-        jobs_list = apscheduler.get_jobs()
-        for i in jobs_list:
-            current_app.logger.info(f"增加后的任务有: {i}")
-        return True
+            send_ding_errmsg(errmsg=str(e), task_id=task_id, params=kwargs)
+        except:
+            pass
+        current_app.logger.error(f"注册任务失败: {e}")
+        return
+    current_app.logger.info("任务增加成功")
+    jobs_list = apscheduler.get_jobs()
+    for i in jobs_list:
+        current_app.logger.info(f"增加后的任务有: {i}")
+    return True
 
 
 def del_task(task_id, **kwargs):
