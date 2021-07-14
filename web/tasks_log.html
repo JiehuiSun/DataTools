@@ -7,6 +7,10 @@
   <link rel="icon" type="image/png" sizes="144x144" href="https://static.mumway.com/saas/payShare/logo_hymm.png"/>
   <link href="/web/static/css/bootstrap.min.css" rel="stylesheet">
   <style>
+    .content-td:hover{
+      background-color: #97c7f0;
+    }
+
     #table td {
       border: 1px solid #d9d9d9;
       padding: 4px 8px;
@@ -199,7 +203,18 @@
       <td class="header-td content" title="{{ i.return_info }}" width="100px" onclick="query_detail(`'{{i.return_info}}'`)" style="cursor:pointer">{{ i.return_info }}</td>
       <td class="header-td">{% if i.is_successful == 1 %}<span>正常</span>{% else %}<span style="color: red;">异常</span>{% endif %}</td>
       <td>
-        <a href="/dms/v1/down_file/{{ i.file_name }}">下载</a>｜<a href="/dms/v1/send_file/?log_id={{ i.id }}">发送</a>
+        {% if i.file_name %}
+          <a href="/dms/v1/down_file/{{ i.file_name }}">
+        {% else %}
+          <a href="javascript:return false;" style="opacity: 0.2">
+        {% endif %}
+          下载</a> ｜
+        {% if i.is_successful == 1 and i.ex_type == 3 %}
+          <a href="/dms/v1/send_file/?log_id={{ i.id }}">
+        {% else %}
+          <a href="javascript:return false;" style="opacity: 0.2">
+        {% endif %}
+          发送</a>
       </td>
     </tr>
   {% endfor %}
@@ -224,6 +239,23 @@
   <script src="/web/static/js/jquery.min.js"></script>
   <script src="/web/static/js/Pagination.js"></script>
   <script type="text/javascript">
+    // 参数
+    if ("{{ params.task_name }}") {
+      document.getElementById('s_task_name').value = "{{ params.task_name }}"
+    };
+    if ("{{ params.task_no }}") {
+      document.getElementById('s_task_id').value = "{{ params.task_no }}"
+    };
+    if ("{{ params.recipient }}") {
+      document.getElementById('s_recipient').value = "{{ params.recipient }}"
+    };
+    if ("{{ params.status }}") {
+      document.getElementById('s_status').value = "{{ params.status }}"
+    };
+    if ("{{ params.handle_type }}") {
+      document.getElementById('s_handle_type').value = "{{ params.handle_type }}"
+    };
+
     document.getElementById('zhezhao').style.display="none";
     u = window.location.href
     if (u.includes("page_num")){

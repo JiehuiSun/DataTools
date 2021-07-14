@@ -27,7 +27,7 @@ class DatabaseModel(db.Model):
     random_code = db.Column(db.String(8), default=valdate_code, nullable=False, comment="随机码")
     is_deleted = db.Column(db.Boolean, default=False)
     dt_create = db.Column(db.DateTime, default=time_utils.now_dt)
-    dt_update = db.Column(db.DateTime, default=time_utils.now_dt)
+    dt_update = db.Column(db.DateTime, default=time_utils.now_dt, onupdate=time_utils.now_dt)
 
     # def __init__(self, name):
         # self.name = name
@@ -58,7 +58,7 @@ class TaskTypeModel(db.Model):
     comments = db.Column(db.String(128), nullable=True, comment="备注")
     is_deleted = db.Column(db.Boolean, default=False)
     dt_create = db.Column(db.DateTime, default=time_utils.now_dt)
-    dt_update = db.Column(db.DateTime, default=time_utils.now_dt)
+    dt_update = db.Column(db.DateTime, default=time_utils.now_dt, onupdate=time_utils.now_dt)
 
     def __str__(self):
         return self.name
@@ -80,7 +80,7 @@ class RequirementModel(db.Model):
     task_type = db.relationship('TaskTypeModel', backref=db.backref('requirement_model', lazy='dynamic'))
     is_deleted = db.Column(db.Boolean, default=False)
     dt_create = db.Column(db.DateTime, default=time_utils.now_dt)
-    dt_update = db.Column(db.DateTime, default=time_utils.now_dt)
+    dt_update = db.Column(db.DateTime, default=time_utils.now_dt, onupdate=time_utils.now_dt)
 
     def __repr__(self):
         return self.name
@@ -108,7 +108,7 @@ class SQLModel(db.Model):
     parent_field = db.Column(db.String(64), nullable=False, comment="父字段")
     is_deleted = db.Column(db.Boolean, default=False)
     dt_create = db.Column(db.DateTime, default=time_utils.now_dt)
-    dt_update = db.Column(db.DateTime, default=time_utils.now_dt)
+    dt_update = db.Column(db.DateTime, default=time_utils.now_dt, onupdate=time_utils.now_dt)
 
     def __repr__(self):
         return self.name
@@ -141,7 +141,7 @@ class TasksModel(db.Model):
     status = db.Column(db.Boolean, default=False, comment="状态")
     is_deleted = db.Column(db.Boolean, default=False)
     dt_create = db.Column(db.DateTime, default=time_utils.now_dt)
-    dt_update = db.Column(db.DateTime, default=time_utils.now_dt)
+    dt_update = db.Column(db.DateTime, default=time_utils.now_dt, onupdate=time_utils.now_dt)
 
     def __repr__(self):
         return self.name
@@ -167,7 +167,7 @@ class TasksLogModel(db.Model):
     file_name = db.Column(db.String(128), nullable=True, comment="文件名")
     is_deleted = db.Column(db.Boolean, default=False)
     dt_create = db.Column(db.DateTime, default=time_utils.now_dt)
-    dt_update = db.Column(db.DateTime, default=time_utils.now_dt)
+    dt_update = db.Column(db.DateTime, default=time_utils.now_dt, onupdate=time_utils.now_dt)
 
     def __repr__(self):
         return str(self.task_no)
